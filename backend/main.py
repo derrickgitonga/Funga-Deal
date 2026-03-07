@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database import engine, Base
 from middleware.idempotency import IdempotencyMiddleware
-from routers import auth, transactions, disputes, mpesa
+from routers import transactions, disputes, mpesa
 from config import settings
 import os
 
@@ -13,14 +13,13 @@ app = FastAPI(title="Funga Deal", version="1.0.0", description="Escrow platform 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.add_middleware(IdempotencyMiddleware)
 
-app.include_router(auth.router)
 app.include_router(transactions.router)
 app.include_router(disputes.router)
 app.include_router(mpesa.router)

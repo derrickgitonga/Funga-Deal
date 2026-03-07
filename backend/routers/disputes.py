@@ -1,4 +1,5 @@
 import os
+from typing import List
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -81,7 +82,7 @@ async def upload_evidence(
     return EvidenceFileOut.model_validate(evidence)
 
 
-@router.get("/{dispute_id}/evidence", response_model=list[EvidenceFileOut])
+@router.get("/{dispute_id}/evidence", response_model=List[EvidenceFileOut])
 def list_evidence(dispute_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     files = db.query(EvidenceFile).filter(EvidenceFile.dispute_id == dispute_id).all()
     return [EvidenceFileOut.model_validate(f) for f in files]

@@ -9,10 +9,11 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    auth0_sub: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    phone: Mapped[str] = mapped_column(String(15), unique=True, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(15), unique=True, index=True, nullable=True)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     buyer_transactions = relationship("Transaction", foreign_keys="Transaction.buyer_id", back_populates="buyer")
