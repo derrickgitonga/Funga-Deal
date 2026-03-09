@@ -2,11 +2,10 @@ import axios from "axios";
 
 const api = axios.create({ baseURL: "/api" });
 
-// We fetch the access token from the Next.js API route created by Auth0
 api.interceptors.request.use(async (config) => {
     if (typeof window !== "undefined") {
         try {
-            const res = await fetch("/api/auth/token");
+            const res = await fetch("/api/token");
             if (res.ok) {
                 const { accessToken } = await res.json();
                 if (accessToken) {
@@ -24,7 +23,7 @@ api.interceptors.response.use(
     (r) => r,
     (err) => {
         if (err.response?.status === 401 && typeof window !== "undefined") {
-            window.location.href = "/api/auth/login";
+            window.location.href = "/sign-in";
         }
         return Promise.reject(err);
     }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PlusCircle, ArrowRight, ShieldCheck, Clock, TrendingUp, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import { Transaction, TransactionStatus } from "@/types";
-import { useUser } from "@auth0/nextjs-auth0/client";
+import { useUser } from "@clerk/nextjs";
 
 const STATUS_BADGE: Record<TransactionStatus, { label: string; className: string }> = {
     DRAFT: { label: "Draft", className: "bg-slate-700 text-slate-300" },
@@ -34,7 +34,8 @@ const timeAgo = (iso: string) => {
 export default function DashboardPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
-    const { user, isLoading: isUserLoading } = useUser();
+    const { user, isLoaded } = useUser();
+    const isUserLoading = !isLoaded;
 
     useEffect(() => {
         api.get("/transactions/").then(({ data }) => {
@@ -54,7 +55,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-                        Good morning{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+                        Good morning{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">Your escrow overview</p>
                 </div>
@@ -103,7 +104,7 @@ export default function DashboardPage() {
                     <div className="space-y-2">
                         {transactions.map((tx) => {
                             const badge = STATUS_BADGE[tx.status];
-                            const isBuyer = tx.buyer_name === user?.name || tx.buyer_name === user?.email;
+                            const isBuyer = tx.buyer_name === user?.fullName || tx.buyer_name === user?.primaryEmailAddress?.emailAddress;
                             const counterparty = isBuyer ? tx.seller_name : tx.buyer_name;
                             return (
                                 <Link

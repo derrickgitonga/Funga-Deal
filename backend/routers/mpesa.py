@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import get_db
 from models.transaction import Transaction, TransactionStatus
-from services.state_machine import transition
 from services.ledger import post_deposit
 
 router = APIRouter(prefix="/api/mpesa", tags=["M-Pesa"])
@@ -18,7 +17,7 @@ async def mpesa_callback(request: Request, db: Session = Depends(get_db)):
     if not checkout_id:
         return {"ResultCode": 1, "ResultDesc": "Missing CheckoutRequestID"}
 
-    tx = db.query(Transaction).filter(Transaction.mpesa_checkout_id == checkout_id).first()
+    tx = db.query(Transaction).filter(Transaction.mpesa_checkout_id == checkout_id).with_for_update().first()
     if not tx:
         return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
@@ -26,7 +25,7 @@ async def mpesa_callback(request: Request, db: Session = Depends(get_db)):
         return {"ResultCode": 0, "ResultDesc": "Already processed"}
 
     if result_code == 0:
-        tx.status = transition(tx.status, TransactionStatus.FUNDED)
+        tx.transition_to(TransactionStatus.FUNDED)
         post_deposit(db, tx)
         db.commit()
 

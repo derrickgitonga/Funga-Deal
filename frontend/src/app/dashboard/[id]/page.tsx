@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, ShieldCheck, Truck, Banknote, AlertTriangle } from "lucide-react";
 import api from "@/lib/api";
 import { Transaction, Dispute } from "@/types";
-import { useUser } from "@auth0/nextjs-auth0/client";
+import { useUser } from "@clerk/nextjs";
 import TransactionStepper from "@/components/TransactionStepper";
 import SecureDepositModal from "@/components/SecureDepositModal";
 import EvidenceLocker from "@/components/EvidenceLocker";
@@ -16,7 +16,8 @@ const formatKsh = (n: number) =>
 export default function TransactionDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
-    const { user, isLoading: isUserLoading } = useUser();
+    const { user, isLoaded } = useUser();
+    const isUserLoading = !isLoaded;
 
     const [tx, setTx] = useState<Transaction | null>(null);
     const [dispute, setDispute] = useState<Dispute | null>(null);
@@ -76,11 +77,11 @@ export default function TransactionDetailPage() {
 
     if (!tx || isUserLoading) return null;
 
-    const isBuyer = tx.buyer_name === user?.name || tx.buyer_name === user?.email;
+    const isBuyer = tx.buyer_name === user?.fullName || tx.buyer_name === user?.primaryEmailAddress?.emailAddress;
     const canPay = isBuyer && tx.status === "DRAFT";
     const canConfirmDelivery = isBuyer && tx.status === "FUNDED";
     const canRelease = isBuyer && tx.status === "GOODS_DELIVERED";
-    const canDispute = (isBuyer || tx.seller_name === user?.name || tx.seller_name === user?.email) && ["FUNDED", "GOODS_DELIVERED"].includes(tx.status);
+    const canDispute = (isBuyer || tx.seller_name === user?.fullName || tx.seller_name === user?.primaryEmailAddress?.emailAddress) && ["FUNDED", "GOODS_DELIVERED"].includes(tx.status);
 
     return (
         <div className="p-8 max-w-3xl mx-auto">

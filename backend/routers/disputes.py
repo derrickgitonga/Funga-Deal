@@ -9,7 +9,6 @@ from models.transaction import Transaction, TransactionStatus
 from models.dispute import Dispute, DisputeStatus, EvidenceFile
 from schemas.dispute import DisputeCreate, DisputeOut, EvidenceFileOut, DisputeResolve
 from utils.deps import get_current_user
-from services.state_machine import transition
 from services.ledger import post_release, post_refund
 from config import settings
 
@@ -18,13 +17,13 @@ router = APIRouter(prefix="/api/disputes", tags=["Disputes"])
 
 @router.post("/", response_model=DisputeOut, status_code=201)
 def open_dispute(data: DisputeCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    tx = db.query(Transaction).filter(Transaction.id == data.transaction_id).first()
+    tx = db.query(Transaction).filter(Transaction.id == data.transaction_id).with_for_update().first()
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
     if tx.buyer_id != user.id and tx.seller_id != user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    tx.status = transition(tx.status, TransactionStatus.DISPUTED)
+    tx.transition_to(TransactionStatus.DISPUTED)
 
     dispute = Dispute(
         transaction_id=tx.id,
@@ -99,17 +98,17 @@ def resolve_dispute(
     if not dispute:
         raise HTTPException(status_code=404, detail="Dispute not found")
 
-    tx = db.query(Transaction).filter(Transaction.id == dispute.transaction_id).first()
-    tx.status = transition(tx.status, TransactionStatus.RESOLVED)
+    tx = db.query(Transaction).filter(Transaction.id == dispute.transaction_id).with_for_update().first()
+    
+    new_status = TransactionStatus.REFUNDED if data.winner == "buyer" else TransactionStatus.RELEASED
+    tx.admin_override(new_status, data.resolution, user.id, db)
 
     dispute.status = DisputeStatus.RESOLVED_BUYER if data.winner == "buyer" else DisputeStatus.RESOLVED_SELLER
     dispute.resolution = data.resolution
 
     if data.winner == "buyer":
-        tx.status = transition(tx.status, TransactionStatus.REFUNDED)
         post_refund(db, tx)
     else:
-        tx.status = transition(tx.status, TransactionStatus.RELEASED)
         post_release(db, tx)
 
     db.commit()

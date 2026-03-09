@@ -6,16 +6,16 @@ export const metadata: Metadata = {
     description: "M-Pesa powered escrow platform. Trade safely with Funga Deal.",
 };
 
-import { UserProvider } from '@auth0/nextjs-auth0/client';
+import { ClerkProvider } from '@clerk/nextjs';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en">
-            <body>
-                <UserProvider>
+        <ClerkProvider>
+            <html lang="en">
+                <body>
                     {children}
-                </UserProvider>
-            </body>
-        </html>
+                </body>
+            </html>
+        </ClerkProvider>
     );
 }

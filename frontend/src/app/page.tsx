@@ -1,22 +1,22 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from '@auth0/nextjs-auth0/client';
+import { useUser } from '@clerk/nextjs';
 import { ShieldCheck } from "lucide-react";
 
 export default function Home() {
     const router = useRouter();
-    const { user, isLoading } = useUser();
+    const { user, isLoaded, isSignedIn } = useUser();
 
     useEffect(() => {
-        if (!isLoading) {
-            if (user) {
+        if (isLoaded) {
+            if (isSignedIn) {
                 router.replace("/dashboard");
             } else {
-                router.replace("/api/auth/login");
+                router.replace("/sign-in");
             }
         }
-    }, [router, user, isLoading]);
+    }, [router, isSignedIn, isLoaded]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-navy-800">

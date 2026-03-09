@@ -30,3 +30,31 @@ class LedgerEntry(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     transaction = relationship("Transaction", back_populates="ledger_entries")
+
+    @staticmethod
+    def record_transfer(db_session, transaction_id: str, amount: float, from_account: AccountType, to_account: AccountType, description: str):
+        if amount <= 0:
+            raise ValueError("Transfer amount must be greater than zero.")
+        
+        # Double entry accounting
+        # Debiting the source account
+        debit_entry = LedgerEntry(
+            transaction_id=transaction_id,
+            account_type=from_account,
+            entry_type=EntryType.DEBIT,
+            amount=amount,
+            description=f"{description} (Debit)"
+        )
+        
+        # Crediting the destination account
+        credit_entry = LedgerEntry(
+            transaction_id=transaction_id,
+            account_type=to_account,
+            entry_type=EntryType.CREDIT,
+            amount=amount,
+            description=f"{description} (Credit)"
+        )
+        
+        db_session.add(debit_entry)
+        db_session.add(credit_entry)
+        return debit_entry, credit_entry
