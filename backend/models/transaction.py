@@ -14,6 +14,7 @@ class TransactionStatus(str, enum.Enum):
     DISPUTED = "DISPUTED"
     RELEASED = "RELEASED"
     REFUNDED = "REFUNDED"
+    CANCELLED = "CANCELLED"
 
 
 class Transaction(Base):
@@ -26,6 +27,7 @@ class Transaction(Base):
     description: Mapped[str] = mapped_column(Text, nullable=True)
     amount: Mapped[float] = mapped_column(Numeric(12, 2))
     status: Mapped[TransactionStatus] = mapped_column(Enum(TransactionStatus), default=TransactionStatus.CREATED)
+    cancellation_reason: Mapped[str] = mapped_column(Text, nullable=True)
     shipped_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     delivered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     shipping_timeout_days: Mapped[int] = mapped_column(Integer, default=7)
@@ -40,16 +42,18 @@ class Transaction(Base):
     ledger_entries = relationship("LedgerEntry", back_populates="transaction")
     disputes = relationship("Dispute", back_populates="transaction")
     admin_action_logs = relationship("AdminActionLog", back_populates="transaction")
+    messages = relationship("Message", back_populates="transaction", order_by="Message.created_at")
 
     def transition_to(self, new_status: TransactionStatus):
         VALID_TRANSITIONS = {
-            TransactionStatus.CREATED: [TransactionStatus.FUNDED],
-            TransactionStatus.FUNDED: [TransactionStatus.SHIPPED, TransactionStatus.REFUNDED],
+            TransactionStatus.CREATED: [TransactionStatus.FUNDED, TransactionStatus.CANCELLED],
+            TransactionStatus.FUNDED: [TransactionStatus.SHIPPED, TransactionStatus.REFUNDED, TransactionStatus.CANCELLED],
             TransactionStatus.SHIPPED: [TransactionStatus.DELIVERED, TransactionStatus.DISPUTED],
             TransactionStatus.DELIVERED: [TransactionStatus.RELEASED, TransactionStatus.DISPUTED],
             TransactionStatus.DISPUTED: [TransactionStatus.RELEASED, TransactionStatus.REFUNDED],
             TransactionStatus.RELEASED: [],
             TransactionStatus.REFUNDED: [],
+            TransactionStatus.CANCELLED: [],
         }
 
         if new_status not in VALID_TRANSITIONS.get(self.status, []):

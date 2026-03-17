@@ -13,7 +13,8 @@ export type TransactionStatus =
     | "DELIVERED"
     | "DISPUTED"
     | "RELEASED"
-    | "REFUNDED";
+    | "REFUNDED"
+    | "CANCELLED";
 
 export interface Transaction {
     id: string;
@@ -25,6 +26,7 @@ export interface Transaction {
     description: string | null;
     amount: number;
     status: TransactionStatus;
+    cancellation_reason?: string;
     created_at: string;
     updated_at: string;
 }
@@ -52,5 +54,14 @@ export interface EvidenceFile {
     uploader_id: string;
     file_name: string;
     file_type: string;
+    created_at: string;
+}
+
+export interface Message {
+    id: string;
+    transaction_id: string;
+    sender_id: string;
+    sender_name: string | null;
+    body: string;
     created_at: string;
 }

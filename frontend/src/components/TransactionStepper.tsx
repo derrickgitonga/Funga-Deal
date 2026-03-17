@@ -2,14 +2,14 @@ import { TransactionStatus } from "@/types";
 import { Check, Clock, ShieldCheck, Truck, AlertTriangle, Banknote } from "lucide-react";
 
 const STEPS: { status: TransactionStatus; label: string; desc: string; icon: React.ElementType }[] = [
-    { status: "DRAFT", label: "Escrow Created", desc: "Terms agreed", icon: Clock },
-    { status: "AWAITING_PAYMENT", label: "Awaiting Payment", desc: "Buyer to send funds", icon: Banknote },
-    { status: "FUNDED", label: "Funds Secured", desc: "Money held in escrow", icon: ShieldCheck },
-    { status: "GOODS_DELIVERED", label: "Delivery Confirmed", desc: "Buyer confirmed delivery", icon: Truck },
+    { status: "CREATED", label: "Escrow Created", desc: "Terms agreed", icon: Clock },
+    { status: "FUNDED", label: "Funds Secured", desc: "Money held in escrow", icon: Banknote },
+    { status: "SHIPPED", label: "Shipped", desc: "Seller dispatched goods", icon: Truck },
+    { status: "DELIVERED", label: "Delivery Confirmed", desc: "Buyer confirmed receipt", icon: ShieldCheck },
     { status: "RELEASED", label: "Funds Released", desc: "Seller paid via M-Pesa", icon: Check },
 ];
 
-const ORDER = ["DRAFT", "AWAITING_PAYMENT", "FUNDED", "GOODS_DELIVERED", "RELEASED"];
+const ORDER = ["CREATED", "FUNDED", "SHIPPED", "DELIVERED", "RELEASED"];
 
 function getStepIndex(status: TransactionStatus) {
     return ORDER.indexOf(status);
@@ -20,25 +20,33 @@ interface Props {
 }
 
 export default function TransactionStepper({ status }: Props) {
-    const isDisputed = status === "DISPUTED" || status === "RESOLVED";
+    const isDisputed = status === "DISPUTED";
     const isRefunded = status === "REFUNDED";
     const isCancelled = status === "CANCELLED";
 
     const currentIdx = getStepIndex(status);
 
     if (isDisputed || isRefunded || isCancelled) {
-        const label =
-            isDisputed ? "In Dispute" : isRefunded ? "Refunded to Buyer" : "Cancelled";
-        const color =
-            isDisputed ? "text-amber-400 border-amber-500 bg-amber-500/10" : "text-red-400 border-red-500 bg-red-500/10";
+        let label = "In Dispute";
+        let desc = "A dispute has been raised — under review.";
+        let color = "text-amber-400 border-amber-500 bg-amber-500/10";
+
+        if (isRefunded) {
+            label = "Refunded to Buyer";
+            desc = "Funds returned to buyer's M-Pesa.";
+            color = "text-red-400 border-red-500 bg-red-500/10";
+        } else if (isCancelled) {
+            label = "Escrow Cancelled";
+            desc = "This transaction was cancelled by the creator.";
+            color = "text-red-400 border-red-500 bg-red-500/10";
+        }
+
         return (
             <div className={`flex items-center gap-3 border rounded-xl px-5 py-4 ${color}`}>
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 <div>
                     <p className="font-semibold text-sm">{label}</p>
-                    <p className="text-xs opacity-70 mt-0.5">
-                        {isDisputed ? "A dispute has been raised — under review." : isRefunded ? "Funds returned to buyer's M-Pesa." : "This escrow was cancelled."}
-                    </p>
+                    <p className="text-xs opacity-70 mt-0.5">{desc}</p>
                 </div>
             </div>
         );
@@ -60,10 +68,10 @@ export default function TransactionStepper({ status }: Props) {
                                 )}
                                 <div
                                     className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all duration-300 ${done
-                                            ? "bg-success-500 border-success-500 text-white"
-                                            : active
-                                                ? "bg-navy-700 border-success-500 text-success-400"
-                                                : "bg-navy-700 border-navy-600 text-slate-600"
+                                        ? "bg-success-500 border-success-500 text-white"
+                                        : active
+                                            ? "bg-navy-700 border-success-500 text-success-400"
+                                            : "bg-navy-700 border-navy-600 text-slate-600"
                                         }`}
                                 >
                                     {done ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}

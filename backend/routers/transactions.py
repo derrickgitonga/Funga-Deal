@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 from models.transaction import Transaction, TransactionStatus
-from schemas.transaction import TransactionCreate, TransactionOut, TransactionList, STKPushRequest, STKPushResponse
+from schemas.transaction import TransactionCreate, TransactionOut, TransactionList, STKPushRequest, STKPushResponse, CancelRequest
 from utils.deps import get_current_user
 from services.ledger import post_deposit, post_release, post_refund
 from services.mpesa import mpesa_service
@@ -97,9 +97,12 @@ def mark_shipped(transaction_id: str, db: Session = Depends(get_db), user: User 
     if tx.seller_id != user.id:
         raise HTTPException(status_code=403, detail="Only seller can mark as shipped")
 
-    tx.transition_to(TransactionStatus.SHIPPED)
-    db.commit()
-    return {"status": tx.status.value}
+    try:
+        tx.transition_to(TransactionStatus.SHIPPED)
+        db.commit()
+        return {"status": tx.status.value}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/{transaction_id}/confirm-delivery")
@@ -110,9 +113,12 @@ def confirm_delivery(transaction_id: str, db: Session = Depends(get_db), user: U
     if tx.buyer_id != user.id:
         raise HTTPException(status_code=403, detail="Only buyer can confirm delivery")
 
-    tx.transition_to(TransactionStatus.DELIVERED)
-    db.commit()
-    return {"status": tx.status.value}
+    try:
+        tx.transition_to(TransactionStatus.DELIVERED)
+        db.commit()
+        return {"status": tx.status.value}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/{transaction_id}/release")
@@ -123,18 +129,58 @@ async def release_funds(transaction_id: str, db: Session = Depends(get_db), user
     if tx.buyer_id != user.id:
         raise HTTPException(status_code=403, detail="Only buyer can release funds")
 
-    tx.release_funds(is_buyer_accepted=True)
-    post_release(db, tx)
+    try:
+        tx.release_funds(is_buyer_accepted=True)
+        post_release(db, tx)
 
-    seller = db.query(User).filter(User.id == tx.seller_id).first()
-    if seller:
-        fee = round(float(tx.amount) * 0.025, 2)
-        payout = round(float(tx.amount) - fee, 2)
-        await mpesa_service.b2c_payout(
-            phone=seller.phone,
-            amount=payout,
-            remarks=f"Payout for: {tx.title}",
-        )
+        seller = db.query(User).filter(User.id == tx.seller_id).first()
+        if seller:
+            fee = round(float(tx.amount) * 0.025, 2)
+            payout = round(float(tx.amount) - fee, 2)
+            await mpesa_service.b2c_payout(
+                phone=seller.phone,
+                amount=payout,
+                remarks=f"Payout for: {tx.title}",
+            )
 
-    db.commit()
-    return {"status": tx.status.value}
+        db.commit()
+        return {"status": tx.status.value}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Release failed: {str(e)}")
+
+
+@router.post("/{transaction_id}/cancel")
+async def cancel_transaction(transaction_id: str, req: CancelRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    tx = db.query(Transaction).filter(Transaction.id == transaction_id).with_for_update().first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    if tx.buyer_id != user.id:
+        raise HTTPException(status_code=403, detail="Only the buyer (creator) can cancel this escrow.")
+
+    needs_refund = tx.status == TransactionStatus.FUNDED
+    
+    try:
+        tx.transition_to(TransactionStatus.CANCELLED)
+        tx.cancellation_reason = f"Cancelled by buyer ({user.full_name}): {req.reason}"
+        
+        if needs_refund:
+            post_refund(db, tx)
+            buyer = db.query(User).filter(User.id == tx.buyer_id).first()
+            if buyer and buyer.phone:
+                await mpesa_service.b2c_payout(
+                    phone=buyer.phone,
+                    amount=float(tx.amount),
+                    remarks=f"Refund for cancelled escrow: {tx.title}"
+                )
+        
+        db.commit()
+        return {"status": tx.status.value, "cancellation_reason": tx.cancellation_reason}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Cancellation failed: {str(e)}")

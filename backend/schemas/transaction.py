@@ -19,10 +19,17 @@ class TransactionOut(BaseModel):
     description: Optional[str]
     amount: float
     status: TransactionStatus
+    cancellation_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     buyer_name: Optional[str] = None
     seller_name: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class CancelRequest(BaseModel):
+    reason: str
 
     model_config = {"from_attributes": True}
 

@@ -9,6 +9,7 @@ import { useUser } from "@clerk/nextjs";
 import TransactionStepper from "@/components/TransactionStepper";
 import SecureDepositModal from "@/components/SecureDepositModal";
 import EvidenceLocker from "@/components/EvidenceLocker";
+import EscrowChat from "@/components/EscrowChat";
 
 const formatKsh = (n: number) =>
     new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
@@ -26,6 +27,9 @@ export default function TransactionDetailPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [disputeReason, setDisputeReason] = useState("");
     const [showDisputeForm, setShowDisputeForm] = useState(false);
+
+    const [showCancelForm, setShowCancelForm] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
 
     const load = async () => {
         try {
@@ -67,6 +71,18 @@ export default function TransactionDetailPage() {
         }
     };
 
+    const cancelEscrow = async () => {
+        if (!cancelReason.trim()) return;
+        setActionLoading(true);
+        try {
+            await api.post(`/transactions/${id}/cancel`, { reason: cancelReason });
+            setShowCancelForm(false);
+            await load();
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full py-32">
@@ -78,11 +94,13 @@ export default function TransactionDetailPage() {
     if (!tx || isUserLoading) return null;
 
     const isBuyer = tx.buyer_name === user?.fullName || tx.buyer_name === user?.primaryEmailAddress?.emailAddress;
+    const isSeller = tx.seller_name === user?.fullName || tx.seller_name === user?.primaryEmailAddress?.emailAddress;
     const canPay = isBuyer && tx.status === "CREATED";
-    const canShip = !isBuyer && tx.status === "FUNDED";
+    const canShip = isSeller && tx.status === "FUNDED";
     const canConfirmDelivery = isBuyer && tx.status === "SHIPPED";
     const canRelease = isBuyer && tx.status === "DELIVERED";
-    const canDispute = (isBuyer || tx.seller_name === user?.fullName || tx.seller_name === user?.primaryEmailAddress?.emailAddress) && ["FUNDED", "SHIPPED", "DELIVERED"].includes(tx.status);
+    const canDispute = (isBuyer || isSeller) && ["FUNDED", "SHIPPED", "DELIVERED"].includes(tx.status);
+    const canCancel = isBuyer && ["CREATED", "FUNDED"].includes(tx.status);
 
     const markShipped = async () => {
         setActionLoading(true);
@@ -127,9 +145,16 @@ export default function TransactionDetailPage() {
                         <p className="text-sm text-slate-300">{new Date(tx.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</p>
                     </div>
                 </div>
+
+                {tx.status === "CANCELLED" && tx.cancellation_reason && (
+                    <div className="mt-5 p-4 bg-red-900/10 border border-red-500/30 rounded-xl">
+                        <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Cancellation Reason</p>
+                        <p className="text-sm text-slate-300">{tx.cancellation_reason}</p>
+                    </div>
+                )}
             </div>
 
-            {(canPay || canShip || canConfirmDelivery || canRelease || canDispute) && (
+            {(canPay || canShip || canConfirmDelivery || canRelease || canDispute || canCancel) && (
                 <div className="card p-5 mb-5 space-y-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Actions</p>
 
@@ -187,6 +212,32 @@ export default function TransactionDetailPage() {
                             </div>
                         </div>
                     )}
+
+                    {canCancel && !showCancelForm && (
+                        <button id="cancel-btn" onClick={() => setShowCancelForm(true)} className="btn-danger w-full flex items-center justify-center gap-2 mt-4 bg-transparent border border-red-500 text-red-500 hover:bg-red-500/10">
+                            Cancel Escrow
+                        </button>
+                    )}
+
+                    {showCancelForm && (
+                        <div className="space-y-3 pt-2 border-t border-navy-600">
+                            <label className="label">Reason for cancellation</label>
+                            <textarea
+                                className="input-field resize-none"
+                                rows={3}
+                                placeholder="e.g. The seller and I decided to handle this outside the platform or I no longer need the item."
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                            />
+                            <div className="flex gap-3">
+                                <button onClick={cancelEscrow} disabled={actionLoading || !cancelReason.trim()} className="btn-danger flex items-center gap-2">
+                                    {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Confirm Cancellation
+                                </button>
+                                <button onClick={() => setShowCancelForm(false)} className="btn-secondary">Back</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -213,6 +264,8 @@ export default function TransactionDetailPage() {
                     onSuccess={() => { setShowDeposit(false); load(); }}
                 />
             )}
+
+            <EscrowChat transactionId={tx.id} />
         </div>
     );
 }

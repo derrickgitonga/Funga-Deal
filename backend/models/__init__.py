@@ -3,3 +3,4 @@ from models.transaction import Transaction, TransactionStatus
 from models.ledger import LedgerEntry, AccountType, EntryType
 from models.dispute import Dispute, DisputeStatus, EvidenceFile
 from models.audit import AdminActionLog
+from models.message import Message

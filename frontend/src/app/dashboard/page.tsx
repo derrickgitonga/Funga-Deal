@@ -14,6 +14,7 @@ const STATUS_BADGE: Record<TransactionStatus, { label: string; className: string
     RELEASED: { label: "Released", className: "bg-success-900/40 text-success-300 border border-success-600/50" },
     DISPUTED: { label: "Disputed", className: "bg-red-900/40 text-red-400 border border-red-700/50" },
     REFUNDED: { label: "Refunded", className: "bg-slate-700 text-slate-300" },
+    CANCELLED: { label: "Cancelled", className: "bg-red-900/20 text-red-400 border border-red-800/30" },
 };
 
 const formatKsh = (n: number) =>
