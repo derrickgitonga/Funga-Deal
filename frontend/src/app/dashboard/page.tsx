@@ -7,15 +7,13 @@ import { Transaction, TransactionStatus } from "@/types";
 import { useUser } from "@clerk/nextjs";
 
 const STATUS_BADGE: Record<TransactionStatus, { label: string; className: string }> = {
-    DRAFT: { label: "Draft", className: "bg-slate-700 text-slate-300" },
-    AWAITING_PAYMENT: { label: "Awaiting Payment", className: "bg-amber-900/40 text-amber-400 border border-amber-700/50" },
+    CREATED: { label: "Created", className: "bg-slate-700 text-slate-300" },
     FUNDED: { label: "Funded", className: "bg-success-900/40 text-success-400 border border-success-700/50" },
-    GOODS_DELIVERED: { label: "Delivery Confirmed", className: "bg-blue-900/40 text-blue-400 border border-blue-700/50" },
+    SHIPPED: { label: "Shipped", className: "bg-blue-900/40 text-blue-400 border border-blue-700/50" },
+    DELIVERED: { label: "Delivery Confirmed", className: "bg-blue-900/40 text-blue-400 border border-blue-700/50" },
     RELEASED: { label: "Released", className: "bg-success-900/40 text-success-300 border border-success-600/50" },
     DISPUTED: { label: "Disputed", className: "bg-red-900/40 text-red-400 border border-red-700/50" },
-    RESOLVED: { label: "Resolved", className: "bg-purple-900/40 text-purple-400 border border-purple-700/50" },
     REFUNDED: { label: "Refunded", className: "bg-slate-700 text-slate-300" },
-    CANCELLED: { label: "Cancelled", className: "bg-slate-700 text-slate-400" },
 };
 
 const formatKsh = (n: number) =>
@@ -44,10 +42,10 @@ export default function DashboardPage() {
     }, []);
 
     const active = transactions.filter(
-        (t) => !["RELEASED", "REFUNDED", "CANCELLED"].includes(t.status)
+        (t) => !["RELEASED", "REFUNDED"].includes(t.status)
     );
     const totalInEscrow = active
-        .filter((t) => t.status === "FUNDED" || t.status === "GOODS_DELIVERED")
+        .filter((t) => ["FUNDED", "SHIPPED", "DELIVERED"].includes(t.status))
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
     return (

@@ -21,11 +21,16 @@ def _enrich(tx: Transaction, db: Session) -> TransactionOut:
     return out
 
 
-@router.post("/", response_model=TransactionOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TransactionOut, status_code=status.HTTP_201_CREATED)
 def create_transaction(data: TransactionCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     seller = db.query(User).filter(User.email == data.seller_email).first()
     if not seller:
         raise HTTPException(status_code=404, detail="Seller not found")
+    if not seller.is_seller:
+        raise HTTPException(
+            status_code=400, 
+            detail="This user has not enabled their seller account. Please ask them to log in and go to 'Become a Seller'."
+        )
     if seller.id == user.id:
         raise HTTPException(status_code=400, detail="Cannot create escrow with yourself")
 
@@ -44,7 +49,7 @@ def create_transaction(data: TransactionCreate, db: Session = Depends(get_db), u
     return _enrich(tx, db)
 
 
-@router.get("/", response_model=TransactionList)
+@router.get("", response_model=TransactionList)
 def list_transactions(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     txs = db.query(Transaction).filter(
         (Transaction.buyer_id == user.id) | (Transaction.seller_id == user.id)
@@ -82,6 +87,19 @@ async def initiate_payment(transaction_id: str, req: STKPushRequest, db: Session
         checkout_request_id=result.get("CheckoutRequestID", ""),
         response_description=result.get("ResponseDescription", "Request accepted"),
     )
+
+
+@router.post("/{transaction_id}/mark-shipped")
+def mark_shipped(transaction_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    tx = db.query(Transaction).filter(Transaction.id == transaction_id).with_for_update().first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if tx.seller_id != user.id:
+        raise HTTPException(status_code=403, detail="Only seller can mark as shipped")
+
+    tx.transition_to(TransactionStatus.SHIPPED)
+    db.commit()
+    return {"status": tx.status.value}
 
 
 @router.post("/{transaction_id}/confirm-delivery")

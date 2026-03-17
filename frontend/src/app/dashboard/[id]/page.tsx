@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, ShieldCheck, Truck, Banknote, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, ShieldCheck, Truck, Banknote, AlertTriangle, Check } from "lucide-react";
 import api from "@/lib/api";
 import { Transaction, Dispute } from "@/types";
 import { useUser } from "@clerk/nextjs";
@@ -78,10 +78,18 @@ export default function TransactionDetailPage() {
     if (!tx || isUserLoading) return null;
 
     const isBuyer = tx.buyer_name === user?.fullName || tx.buyer_name === user?.primaryEmailAddress?.emailAddress;
-    const canPay = isBuyer && tx.status === "DRAFT";
-    const canConfirmDelivery = isBuyer && tx.status === "FUNDED";
-    const canRelease = isBuyer && tx.status === "GOODS_DELIVERED";
-    const canDispute = (isBuyer || tx.seller_name === user?.fullName || tx.seller_name === user?.primaryEmailAddress?.emailAddress) && ["FUNDED", "GOODS_DELIVERED"].includes(tx.status);
+    const canPay = isBuyer && tx.status === "CREATED";
+    const canShip = !isBuyer && tx.status === "FUNDED";
+    const canConfirmDelivery = isBuyer && tx.status === "SHIPPED";
+    const canRelease = isBuyer && tx.status === "DELIVERED";
+    const canDispute = (isBuyer || tx.seller_name === user?.fullName || tx.seller_name === user?.primaryEmailAddress?.emailAddress) && ["FUNDED", "SHIPPED", "DELIVERED"].includes(tx.status);
+
+    const markShipped = async () => {
+        setActionLoading(true);
+        await api.post(`/transactions/${id}/mark-shipped`);
+        await load();
+        setActionLoading(false);
+    };
 
     return (
         <div className="p-8 max-w-3xl mx-auto">
@@ -121,7 +129,7 @@ export default function TransactionDetailPage() {
                 </div>
             </div>
 
-            {(canPay || canConfirmDelivery || canRelease || canDispute) && (
+            {(canPay || canShip || canConfirmDelivery || canRelease || canDispute) && (
                 <div className="card p-5 mb-5 space-y-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Actions</p>
 
@@ -132,9 +140,16 @@ export default function TransactionDetailPage() {
                         </button>
                     )}
 
+                    {canShip && (
+                        <button id="mark-shipped-btn" onClick={markShipped} disabled={actionLoading} className="btn-secondary w-full flex items-center justify-center gap-2">
+                            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+                            Mark as Shipped
+                        </button>
+                    )}
+
                     {canConfirmDelivery && (
                         <button id="confirm-delivery-btn" onClick={confirmDelivery} disabled={actionLoading} className="btn-secondary w-full flex items-center justify-center gap-2">
-                            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+                            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                             Confirm I received the goods / service
                         </button>
                     )}

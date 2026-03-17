@@ -13,6 +13,7 @@ import {
 const NAV = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
     { href: "/dashboard/new", label: "New Escrow", icon: PlusCircle },
+    { href: "/dashboard/become-seller", label: "Become a Seller", icon: ShieldCheck },
 ];
 
 export default function Sidebar() {

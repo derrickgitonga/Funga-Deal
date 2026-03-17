@@ -4,17 +4,15 @@ const api = axios.create({ baseURL: "/api" });
 
 api.interceptors.request.use(async (config) => {
     if (typeof window !== "undefined") {
-        try {
-            const res = await fetch("/api/token");
-            if (res.ok) {
-                const { accessToken } = await res.json();
-                if (accessToken) {
-                    config.headers.Authorization = `Bearer ${accessToken}`;
-                }
-            }
-        } catch (e) {
-            console.error("Failed to fetch auth token", e);
+        const res = await fetch("/api/token");
+        if (!res.ok) {
+            return Promise.reject(new Error("Not authenticated"));
         }
+        const { accessToken } = await res.json();
+        if (!accessToken) {
+            return Promise.reject(new Error("No access token — sign in again"));
+        }
+        config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
 });
@@ -22,7 +20,8 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
     (r) => r,
     (err) => {
-        if (err.response?.status === 401 && typeof window !== "undefined") {
+        const status = err.response?.status;
+        if ((status === 401 || status === 403) && typeof window !== "undefined") {
             window.location.href = "/sign-in";
         }
         return Promise.reject(err);

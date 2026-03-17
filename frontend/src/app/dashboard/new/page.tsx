@@ -19,7 +19,7 @@ export default function NewEscrowPage() {
         setLoading(true);
         setError("");
         try {
-            const { data } = await api.post("/transactions/", {
+            const { data } = await api.post("/transactions", {
                 ...form,
                 amount: parseFloat(form.amount),
             });

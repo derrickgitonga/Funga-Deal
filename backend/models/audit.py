@@ -16,4 +16,4 @@ class AdminActionLog(Base):
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     admin = relationship("User", foreign_keys=[admin_id])
-    transaction = relationship("Transaction", foreign_keys=[transaction_id])
+    transaction = relationship("Transaction", foreign_keys=[transaction_id], back_populates="admin_action_logs")

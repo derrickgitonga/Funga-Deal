@@ -7,15 +7,13 @@ export interface User {
 }
 
 export type TransactionStatus =
-    | "DRAFT"
-    | "AWAITING_PAYMENT"
+    | "CREATED"
     | "FUNDED"
-    | "GOODS_DELIVERED"
-    | "RELEASED"
+    | "SHIPPED"
+    | "DELIVERED"
     | "DISPUTED"
-    | "RESOLVED"
-    | "REFUNDED"
-    | "CANCELLED";
+    | "RELEASED"
+    | "REFUNDED";
 
 export interface Transaction {
     id: string;

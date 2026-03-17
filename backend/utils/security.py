@@ -18,9 +18,15 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def verify_clerk_token(token: str) -> Optional[dict]:
     try:
-        jwks_url = "https://api.clerk.com/v1/jwks"
-        headers = {"Authorization": f"Bearer {settings.CLERK_SECRET_KEY}"}
-        jwks = requests.get(jwks_url, headers=headers).json()
+        # Derive the frontend API host from the publishable key.
+        # pk_test_<base64(frontend-api-host)> -> decode to get the host.
+        import base64
+        raw = settings.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.split("_", 2)[-1]
+        # Clerk appends a $ sign; strip it and add padding before decoding.
+        padded = raw.rstrip("$") + "=" * (-len(raw.rstrip("$")) % 4)
+        frontend_api = base64.b64decode(padded).decode("utf-8").rstrip("$")
+        jwks_url = f"https://{frontend_api}/.well-known/jwks.json"
+        jwks = requests.get(jwks_url).json()
         unverified_header = jwt.get_unverified_header(token)
 
         rsa_key = {}
