@@ -13,7 +13,7 @@ Funga-Deal is a digital platform designed to facilitate secure transactions and 
 * Frontend: [Insert Framework, e.g., React / Next.js]
 * Backend: [Insert Language, e.g., Node.js / Python]
 * Database: [Insert DB, e.g., PostgreSQL / MongoDB]
-* Payment Integration: [Insert API, e.g., Daraja / Stripe]
+* Payment Integration: [Insert API, e.g. Daraja / Stripe]
 
 ## Getting Started
 
