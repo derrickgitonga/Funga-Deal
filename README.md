@@ -1,64 +1,72 @@
 # Funga-Deal
 
 ## Overview
-Funga-Deal is a digital platform designed to facilitate secure transactions and agreement management. The project aims to bridge the trust gap between parties in a marketplace environment by providing a structured workflow for closing deals.
+**Funga-Deal** is a secure digital escrow and agreement management platform designed to bridge the trust gap in online marketplaces. It provides a structured workflow for buyers and sellers to initiate, track, and close deals with verified milestones and integrated payment security.
 
-## Features
-* Transaction Tracking: Monitor the progress of a deal from initiation to completion.
-* Secure Integration: Built-in support for payment gateways and verification steps.
-* User Management: Roles for buyers and sellers to interact within a unified interface.
-* Status Updates: Automated logging of deal milestones to ensure transparency.
+## Project Structure
+This repository is organized as a **Monorepo**:
+* **/frontend**: Next.js 15 application (UI, Dashboard, and Clerk Auth).
+* **/backend**: Node.js/Express services handling core transaction logic and API integrations.
+
+---
 
 ## Tech Stack
-* Frontend: [Insert Framework, e.g., React / Next.js]
-* Backend: [Insert Language, e.g., Node.js / Python]
-* Database: [Insert DB, e.g., PostgreSQL / MongoDB]
-* Payment Integration: [Insert API, e.g. Daraja / Stripe]
+
+### Frontend & UI
+* **Framework:** Next.js 15 (App Router)
+* **Language:** TypeScript
+* **Styling:** Tailwind CSS & Lucide React (Icons)
+* **Authentication:** Clerk (Middleware protected routes)
+
+### Backend & Database
+* **Server:** Node.js / Express
+* **Database:** [Neon](https://neon.tech) (Serverless PostgreSQL)
+* **ORM:** Drizzle ORM (Type-safe database operations)
+* **Communication:** Axios for frontend-to-backend API calls
+
+---
 
 ## Getting Started
 
 ### Prerequisites
-Before you begin, ensure you have the following installed:
-* [Insert Language Runtime, e.g., Node.js v18+]
-* [Insert Package Manager, e.g., npm or yarn]
-* Git
+Ensure you have the following installed:
+* **Node.js:** v20.x or higher
+* **npm:** v10.x or higher
+* **Git**
 
-### Installation
-1. Clone the repository:
-   git clone https://github.com/derrickgitonga/Funga-Deal.git
+### Installation & Setup
 
-2. Navigate to the project directory:
-   cd Funga-Deal
+1.  **Clone the Repository:**
+    ```bash
+    git clone [https://github.com/derrickgitonga/Funga-Deal.git](https://github.com/derrickgitonga/Funga-Deal.git)
+    cd Funga-Deal
+    ```
 
-3. Install the necessary dependencies:
-   npm install
+2.  **Install Frontend Dependencies:**
+    *Note: We use `--legacy-peer-deps` to align Next.js 15 and Clerk versions and avoid dependency conflicts.*
+    ```bash
+    cd frontend
+    npm install --legacy-peer-deps
+    ```
 
-4. Configure environment variables:
-   Create a .env file in the root directory and add your specific credentials:
-   DATABASE_URL=your_database_url
-   API_KEY=your_api_key
+3.  **Install Backend Dependencies:**
+    ```bash
+    cd ../backend
+    npm install
+    ```
 
-### Running the Application
-To start the development server, run:
-npm run dev
+### Environment Configuration
+Create a `.env.local` file in the `/frontend` directory:
 
-The application should now be accessible at http://localhost:3000.
+```env
+# Database (Neon Connection String)
+DATABASE_URL="postgresql://user:password@ep-cool-darkness-123.us-east-2.aws.neon.tech/neondb?sslmode=require"
 
-## Folder Structure
-* /src: Contains the core application logic and components.
-* /public: Static assets such as images and fonts.
-* /tests: Unit and integration tests to ensure code quality.
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
-## Contributing
-1. Fork the Project.
-2. Create your Feature Branch (git checkout -b feature/NewFeature).
-3. Commit your Changes (git commit -m 'Add NewFeature').
-4. Push to the Branch (git push origin feature/NewFeature).
-5. Open a Pull Request.
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-Project Maintainer: Derrick Gitonga
-Project Link: https://github.com/derrickgitonga/Funga-Deal
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:5000
