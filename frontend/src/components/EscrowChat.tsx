@@ -21,7 +21,6 @@ export default function EscrowChat({ transactionId }: Props) {
             const { data } = await api.get(`/messages/${transactionId}`);
             setMessages(data);
         } catch {
-            // silently ignore poll errors
         }
     };
 
