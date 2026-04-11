@@ -33,18 +33,18 @@ export default function NewEscrowPage() {
 
     return (
         <div className="p-8 max-w-xl mx-auto">
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors mb-7">
+            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-7">
                 <ArrowLeft className="w-4 h-4" />
                 Back to dashboard
             </Link>
 
             <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-success-500/15 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5 text-success-400" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">Create New Escrow</h1>
-                    <p className="text-xs text-slate-500">Funds are held securely until delivery is confirmed</p>
+                    <h1 className="text-xl font-bold text-gray-900">Create New Escrow</h1>
+                    <p className="text-xs text-gray-500">Funds are held securely until delivery is confirmed</p>
                 </div>
             </div>
 
@@ -53,7 +53,7 @@ export default function NewEscrowPage() {
                     <div>
                         <label className="label">Seller's email address</label>
                         <input type="email" className="input-field" placeholder="seller@example.co.ke" value={form.seller_email} onChange={set("seller_email")} required />
-                        <p className="text-xs text-slate-600 mt-1">The seller must already have a Funga Deal account</p>
+                        <p className="text-xs text-gray-400 mt-1">The seller must already have a Funga Deal account</p>
                     </div>
 
                     <div>
@@ -75,7 +75,7 @@ export default function NewEscrowPage() {
                     <div>
                         <label className="label">Agreed amount (Ksh)</label>
                         <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">Ksh</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-400">Ksh</span>
                             <input
                                 type="number"
                                 className="input-field pl-12"
@@ -90,13 +90,13 @@ export default function NewEscrowPage() {
                     </div>
 
                     {error && (
-                        <div className="bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-sm text-red-400">
+                        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">
                             {error}
                         </div>
                     )}
 
-                    <div className="bg-navy-800 rounded-lg px-4 py-3 text-xs text-slate-500 border border-navy-600">
-                        <p className="font-medium text-slate-400 mb-1">How escrow protects you</p>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3 text-xs text-gray-600">
+                        <p className="font-semibold text-gray-700 mb-1">How escrow protects you</p>
                         <p>The buyer deposits funds via M-Pesa. Money is held by Funga Deal and only released to the seller after the buyer confirms they received the goods or service.</p>
                     </div>
 

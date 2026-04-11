@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database import engine, Base
 from middleware.idempotency import IdempotencyMiddleware
-from routers import transactions, disputes, mpesa, users, messages
+from routers import transactions, disputes, mpesa, users, messages, wallet, admin, payment_links
 from config import settings
 import os
 
@@ -25,6 +25,9 @@ app.include_router(disputes.router)
 app.include_router(mpesa.router)
 app.include_router(users.router)
 app.include_router(messages.router)
+app.include_router(wallet.router)
+app.include_router(admin.router)
+app.include_router(payment_links.router)
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")

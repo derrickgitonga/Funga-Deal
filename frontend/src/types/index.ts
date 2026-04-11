@@ -65,3 +65,46 @@ export interface Message {
     body: string;
     created_at: string;
 }
+
+export type DeliveryMethod = "Courier" | "Digital" | "Service";
+export type PaymentLinkStatus = "active" | "inactive";
+
+export interface PaymentLink {
+    id: string;
+    seller_id: string;
+    seller_name: string | null;
+    title: string;
+    description: string | null;
+    price: number;
+    currency: string;
+    delivery_method: DeliveryMethod;
+    status: PaymentLinkStatus;
+    created_at: string;
+}
+
+export interface WalletBalance {
+    escrow_held: number;
+    total_spent: number;
+    total_earned: number;
+}
+
+export interface AdminStats {
+    total_volume: number;
+    open_disputes: number;
+    completed_transactions: number;
+    escrow_held: number;
+    total_fees_earned: number;
+}
+
+export interface AdminDispute {
+    id: string;
+    transaction_id: string;
+    transaction_title: string | null;
+    amount: number;
+    buyer_name: string | null;
+    seller_name: string | null;
+    raised_by_name: string | null;
+    reason: string;
+    status: string;
+    created_at: string;
+}

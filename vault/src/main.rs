@@ -1,5 +1,11 @@
+mod config;
+mod crypto_payment;
 mod error;
 mod escrow;
+mod mpesa;
+mod nowpayments;
+mod payment;
+mod payment_link_payment;
 
 use std::sync::Arc;
 
@@ -7,25 +13,34 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::post,
+    routing::{get, post},
     Json, Router,
 };
 use dotenvy::dotenv;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use tower_http::cors::CorsLayer;
 use tracing::info;
 use uuid::Uuid;
 
+use config::Config;
 use escrow::{
     db::EscrowRepository,
     machine::{DisputeResolution, ResolvedEscrow},
     AnyEscrow, Created, Escrow,
 };
+use mpesa::MpesaClient;
+use nowpayments::NowPaymentsClient;
 
 #[derive(Clone)]
-struct AppState {
-    db: PgPool,
+pub struct AppState {
+    pub db: PgPool,
+    pub mpesa: Arc<MpesaClient>,
+    pub nowpayments: Arc<NowPaymentsClient>,
+    pub nowpayments_price_currency: String,
+    pub vault_public_url: String,
+    pub frontend_url: String,
 }
 
 async fn create_escrow(
@@ -190,13 +205,26 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let cfg = Config::from_env()?;
+
+    let mpesa = Arc::new(MpesaClient::new(cfg.clone()));
+    let nowpayments = Arc::new(NowPaymentsClient::new(
+        cfg.nowpayments_api_key.clone(),
+        cfg.nowpayments_ipn_secret.clone(),
+    ));
 
     let pool = PgPool::connect(&database_url).await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let state = Arc::new(AppState { db: pool });
+    let state = Arc::new(AppState {
+        db: pool,
+        mpesa,
+        nowpayments,
+        nowpayments_price_currency: cfg.nowpayments_price_currency,
+        vault_public_url: cfg.vault_public_url.clone(),
+        frontend_url: cfg.frontend_url,
+    });
 
     let app = Router::new()
         .route("/escrows", post(create_escrow))
@@ -204,6 +232,16 @@ async fn main() -> anyhow::Result<()> {
         .route("/escrows/:id/release", post(release_funds))
         .route("/escrows/:id/refund", post(refund_funds))
         .route("/escrows/:id/dispute/resolve", post(resolve_dispute))
+        .route("/payments/:id/initiate", post(payment::initiate_payment))
+        .route("/payments/callback", post(payment::mpesa_callback))
+        .route("/crypto-payments/:id/initiate", post(crypto_payment::initiate_crypto_payment))
+        .route("/crypto-payments/callback", post(crypto_payment::crypto_callback))
+        .route("/payment-links/:id", get(payment_link_payment::get_link))
+        .route("/payment-links/:id/pay/crypto", post(payment_link_payment::pay_crypto))
+        .route("/payment-links/:id/pay/mpesa", post(payment_link_payment::pay_mpesa))
+        .route("/payment-links/callback/crypto", post(payment_link_payment::crypto_callback))
+        .route("/payment-links/callback/mpesa", post(payment_link_payment::mpesa_callback))
+        .layer(CorsLayer::permissive())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8001").await?;

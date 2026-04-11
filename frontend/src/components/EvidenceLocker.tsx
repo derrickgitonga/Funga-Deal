@@ -44,7 +44,7 @@ export default function EvidenceLocker({ disputeId }: Props) {
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-300">Evidence Locker</h3>
+                <h3 className="text-sm font-semibold text-gray-700">Evidence Locker</h3>
                 <label className="btn-secondary flex items-center gap-2 cursor-pointer">
                     {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                     {uploading ? "Uploading..." : "Upload File"}
@@ -53,32 +53,32 @@ export default function EvidenceLocker({ disputeId }: Props) {
             </div>
 
             {error && (
-                <div className="bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-sm text-red-400 mb-3">
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-3">
                     {error}
                 </div>
             )}
 
             {files.length === 0 ? (
                 <div
-                    className="border-2 border-dashed border-navy-600 rounded-xl py-10 text-center cursor-pointer hover:border-navy-500 transition-colors"
+                    className="border-2 border-dashed border-gray-200 rounded-xl py-10 text-center cursor-pointer hover:border-gray-300 transition-colors"
                     onClick={() => inputRef.current?.click()}
                 >
-                    <Upload className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                    <p className="text-sm text-slate-500">Upload photos, receipts, or PDFs as evidence</p>
-                    <p className="text-xs text-slate-600 mt-1">JPEG, PNG, WebP, PDF supported</p>
+                    <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Upload photos, receipts, or PDFs as evidence</p>
+                    <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP, PDF supported</p>
                 </div>
             ) : (
                 <div className="space-y-2">
                     {files.map((f) => (
-                        <div key={f.id} className="flex items-center gap-3 bg-navy-800 border border-navy-600 rounded-lg px-4 py-3">
+                        <div key={f.id} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
                             {f.file_type === "application/pdf" ? (
-                                <File className="w-5 h-5 text-red-400 flex-shrink-0" />
+                                <File className="w-5 h-5 text-red-500 flex-shrink-0" />
                             ) : (
-                                <ImageIcon className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                                <ImageIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-200 truncate font-medium">{f.file_name}</p>
-                                <p className="text-xs text-slate-600">{new Date(f.created_at).toLocaleDateString("en-KE")}</p>
+                                <p className="text-sm text-gray-800 truncate font-medium">{f.file_name}</p>
+                                <p className="text-xs text-gray-400">{new Date(f.created_at).toLocaleDateString("en-KE")}</p>
                             </div>
                         </div>
                     ))}

@@ -7,14 +7,14 @@ import { Transaction, TransactionStatus } from "@/types";
 import { useUser } from "@clerk/nextjs";
 
 const STATUS_BADGE: Record<TransactionStatus, { label: string; className: string }> = {
-    CREATED: { label: "Created", className: "bg-slate-700 text-slate-300" },
-    FUNDED: { label: "Funded", className: "bg-success-900/40 text-success-400 border border-success-700/50" },
-    SHIPPED: { label: "Shipped", className: "bg-blue-900/40 text-blue-400 border border-blue-700/50" },
-    DELIVERED: { label: "Delivery Confirmed", className: "bg-blue-900/40 text-blue-400 border border-blue-700/50" },
-    RELEASED: { label: "Released", className: "bg-success-900/40 text-success-300 border border-success-600/50" },
-    DISPUTED: { label: "Disputed", className: "bg-red-900/40 text-red-400 border border-red-700/50" },
-    REFUNDED: { label: "Refunded", className: "bg-slate-700 text-slate-300" },
-    CANCELLED: { label: "Cancelled", className: "bg-red-900/20 text-red-400 border border-red-800/30" },
+    CREATED: { label: "Created", className: "bg-gray-100 text-gray-600" },
+    FUNDED: { label: "Funded", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+    SHIPPED: { label: "Shipped", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+    DELIVERED: { label: "Delivered", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+    RELEASED: { label: "Released", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+    DISPUTED: { label: "Disputed", className: "bg-red-50 text-red-700 border border-red-200" },
+    REFUNDED: { label: "Refunded", className: "bg-gray-100 text-gray-600" },
+    CANCELLED: { label: "Cancelled", className: "bg-red-50 text-red-600 border border-red-200" },
 };
 
 const formatKsh = (n: number) =>
@@ -34,7 +34,6 @@ export default function DashboardPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const { user, isLoaded } = useUser();
-    const isUserLoading = !isLoaded;
 
     useEffect(() => {
         api.get("/transactions/").then(({ data }) => {
@@ -53,10 +52,10 @@ export default function DashboardPage() {
         <div className="p-8 max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900">
                         Good morning{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
                     </h1>
-                    <p className="text-sm text-slate-500 mt-1">Your escrow overview</p>
+                    <p className="text-sm text-gray-500 mt-1">Your escrow overview</p>
                 </div>
                 <Link href="/dashboard/new" className="btn-primary flex items-center gap-2">
                     <PlusCircle className="w-4 h-4" />
@@ -66,34 +65,34 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-3 gap-4 mb-8">
                 {[
-                    { label: "In Escrow", value: formatKsh(totalInEscrow), icon: ShieldCheck, color: "text-success-400" },
-                    { label: "Active Deals", value: String(active.length), icon: TrendingUp, color: "text-blue-400" },
-                    { label: "Total Deals", value: String(transactions.length), icon: Clock, color: "text-slate-400" },
-                ].map(({ label, value, icon: Icon, color }) => (
+                    { label: "In Escrow", value: formatKsh(totalInEscrow), icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { label: "Active Deals", value: String(active.length), icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50" },
+                    { label: "Total Deals", value: String(transactions.length), icon: Clock, color: "text-gray-500", bg: "bg-gray-100" },
+                ].map(({ label, value, icon: Icon, color, bg }) => (
                     <div key={label} className="card px-5 py-4">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mb-3`}>
                             <Icon className={`w-4 h-4 ${color}`} />
-                            <span className="text-xs text-slate-500">{label}</span>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{value}</p>
+                        <p className="text-xs text-gray-500 mb-1">{label}</p>
+                        <p className="text-2xl font-bold text-gray-900">{value}</p>
                     </div>
                 ))}
             </div>
 
             <div>
-                <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
                     Transaction Timeline
                 </h2>
 
                 {loading ? (
                     <div className="flex items-center justify-center py-16">
-                        <Loader2 className="w-6 h-6 animate-spin text-success-500" />
+                        <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
                     </div>
                 ) : transactions.length === 0 ? (
                     <div className="card px-6 py-12 text-center">
-                        <ShieldCheck className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                        <p className="text-slate-400 font-medium">No escrows yet</p>
-                        <p className="text-sm text-slate-600 mt-1">Create your first deal to start transacting safely</p>
+                        <ShieldCheck className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-700 font-medium">No escrows yet</p>
+                        <p className="text-sm text-gray-400 mt-1">Create your first deal to start transacting safely</p>
                         <Link href="/dashboard/new" className="btn-primary inline-flex mt-4 gap-2 items-center">
                             <PlusCircle className="w-4 h-4" />
                             New Escrow
@@ -109,14 +108,14 @@ export default function DashboardPage() {
                                 <Link
                                     key={tx.id}
                                     href={`/dashboard/${tx.id}`}
-                                    className="card px-5 py-4 flex items-center gap-4 hover:border-navy-500 hover:bg-navy-600/30 transition-all group"
+                                    className="card px-5 py-4 flex items-center gap-4 hover:border-gray-300 hover:shadow-md transition-all group"
                                 >
-                                    <div className="w-10 h-10 rounded-lg bg-navy-800 flex items-center justify-center flex-shrink-0">
-                                        <ShieldCheck className="w-5 h-5 text-slate-500 group-hover:text-success-400 transition-colors" />
+                                    <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                        <ShieldCheck className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-slate-100 text-sm truncate">{tx.title}</p>
-                                        <p className="text-xs text-slate-500 mt-0.5">
+                                        <p className="font-semibold text-gray-900 text-sm truncate">{tx.title}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5">
                                             {isBuyer ? "You → " : ""}
                                             {counterparty}
                                             {!isBuyer ? " → You" : ""}
@@ -124,9 +123,9 @@ export default function DashboardPage() {
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3 flex-shrink-0">
-                                        <p className="text-sm font-bold text-slate-100">{formatKsh(tx.amount)}</p>
+                                        <p className="text-sm font-bold text-gray-900">{formatKsh(tx.amount)}</p>
                                         <span className={`badge ${badge.className}`}>{badge.label}</span>
-                                        <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                                        <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                                     </div>
                                 </Link>
                             );

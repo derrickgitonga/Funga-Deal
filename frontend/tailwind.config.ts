@@ -5,24 +5,7 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                navy: {
-                    50: "#E8EAF0",
-                    100: "#C5C9D6",
-                    200: "#9DA3B8",
-                    300: "#75799A",
-                    400: "#505572",
-                    500: "#2D3348",
-                    600: "#252A3E",
-                    700: "#1E2235",
-                    800: "#1A202C",
-                    900: "#111524",
-                    950: "#0A0D16",
-                },
-                slate: {
-                    350: "#9CA3AF",
-                    450: "#6B7280",
-                },
-                success: {
+                emerald: {
                     50: "#ECFDF5",
                     100: "#D1FAE5",
                     200: "#A7F3D0",
@@ -31,10 +14,15 @@ const config: Config = {
                     500: "#10B981",
                     600: "#059669",
                     700: "#047857",
+                    800: "#065F46",
+                    900: "#064E3B",
                 },
             },
             fontFamily: {
                 sans: ["Inter", "system-ui", "sans-serif"],
+            },
+            boxShadow: {
+                card: "0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07)",
             },
         },
     },

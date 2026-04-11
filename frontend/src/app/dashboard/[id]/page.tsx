@@ -18,7 +18,6 @@ export default function TransactionDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
     const { user, isLoaded } = useUser();
-    const isUserLoading = !isLoaded;
 
     const [tx, setTx] = useState<Transaction | null>(null);
     const [dispute, setDispute] = useState<Dispute | null>(null);
@@ -27,7 +26,6 @@ export default function TransactionDetailPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [disputeReason, setDisputeReason] = useState("");
     const [showDisputeForm, setShowDisputeForm] = useState(false);
-
     const [showCancelForm, setShowCancelForm] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
 
@@ -86,12 +84,12 @@ export default function TransactionDetailPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full py-32">
-                <Loader2 className="w-6 h-6 animate-spin text-success-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
             </div>
         );
     }
 
-    if (!tx || isUserLoading) return null;
+    if (!tx || !isLoaded) return null;
 
     const isBuyer = tx.buyer_name === user?.fullName || tx.buyer_name === user?.primaryEmailAddress?.emailAddress;
     const isSeller = tx.seller_name === user?.fullName || tx.seller_name === user?.primaryEmailAddress?.emailAddress;
@@ -111,7 +109,7 @@ export default function TransactionDetailPage() {
 
     return (
         <div className="p-8 max-w-3xl mx-auto">
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors mb-7">
+            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-7">
                 <ArrowLeft className="w-4 h-4" />
                 Back to dashboard
             </Link>
@@ -119,44 +117,44 @@ export default function TransactionDetailPage() {
             <div className="card p-6 mb-5">
                 <div className="flex items-start justify-between mb-5">
                     <div>
-                        <h1 className="text-xl font-bold text-slate-100">{tx.title}</h1>
-                        {tx.description && <p className="text-sm text-slate-500 mt-1">{tx.description}</p>}
+                        <h1 className="text-xl font-bold text-gray-900">{tx.title}</h1>
+                        {tx.description && <p className="text-sm text-gray-500 mt-1">{tx.description}</p>}
                     </div>
-                    <p className="text-2xl font-bold text-success-400 flex-shrink-0 ml-4">{formatKsh(tx.amount)}</p>
+                    <p className="text-2xl font-bold text-emerald-600 flex-shrink-0 ml-4">{formatKsh(tx.amount)}</p>
                 </div>
 
                 <TransactionStepper status={tx.status} />
 
-                <div className="grid grid-cols-2 gap-4 mt-6 pt-5 border-t border-navy-600">
+                <div className="grid grid-cols-2 gap-4 mt-6 pt-5 border-t border-gray-100">
                     <div>
-                        <p className="text-xs text-slate-500 mb-1">Buyer</p>
-                        <p className="text-sm font-medium text-slate-200">{tx.buyer_name} {isBuyer ? "(You)" : ""}</p>
+                        <p className="text-xs text-gray-400 mb-1">Buyer</p>
+                        <p className="text-sm font-medium text-gray-800">{tx.buyer_name} {isBuyer ? "(You)" : ""}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-500 mb-1">Seller</p>
-                        <p className="text-sm font-medium text-slate-200">{tx.seller_name} {!isBuyer ? "(You)" : ""}</p>
+                        <p className="text-xs text-gray-400 mb-1">Seller</p>
+                        <p className="text-sm font-medium text-gray-800">{tx.seller_name} {!isBuyer ? "(You)" : ""}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-500 mb-1">Created</p>
-                        <p className="text-sm text-slate-300">{new Date(tx.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</p>
+                        <p className="text-xs text-gray-400 mb-1">Created</p>
+                        <p className="text-sm text-gray-600">{new Date(tx.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-500 mb-1">Last updated</p>
-                        <p className="text-sm text-slate-300">{new Date(tx.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</p>
+                        <p className="text-xs text-gray-400 mb-1">Last updated</p>
+                        <p className="text-sm text-gray-600">{new Date(tx.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</p>
                     </div>
                 </div>
 
                 {tx.status === "CANCELLED" && tx.cancellation_reason && (
-                    <div className="mt-5 p-4 bg-red-900/10 border border-red-500/30 rounded-xl">
-                        <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Cancellation Reason</p>
-                        <p className="text-sm text-slate-300">{tx.cancellation_reason}</p>
+                    <div className="mt-5 p-4 bg-red-50 border border-red-200 rounded-xl">
+                        <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2">Cancellation Reason</p>
+                        <p className="text-sm text-gray-700">{tx.cancellation_reason}</p>
                     </div>
                 )}
             </div>
 
             {(canPay || canShip || canConfirmDelivery || canRelease || canDispute || canCancel) && (
                 <div className="card p-5 mb-5 space-y-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Actions</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Actions</p>
 
                     {canPay && (
                         <button id="pay-now-btn" onClick={() => setShowDeposit(true)} className="btn-primary w-full flex items-center justify-center gap-2">
@@ -194,7 +192,7 @@ export default function TransactionDetailPage() {
                     )}
 
                     {showDisputeForm && (
-                        <div className="space-y-3 pt-2 border-t border-navy-600">
+                        <div className="space-y-3 pt-2 border-t border-gray-100">
                             <label className="label">Reason for dispute</label>
                             <textarea
                                 className="input-field resize-none"
@@ -214,13 +212,13 @@ export default function TransactionDetailPage() {
                     )}
 
                     {canCancel && !showCancelForm && (
-                        <button id="cancel-btn" onClick={() => setShowCancelForm(true)} className="btn-danger w-full flex items-center justify-center gap-2 mt-4 bg-transparent border border-red-500 text-red-500 hover:bg-red-500/10">
+                        <button id="cancel-btn" onClick={() => setShowCancelForm(true)} className="w-full mt-4 text-sm text-red-500 hover:text-red-600 border border-red-200 hover:bg-red-50 rounded-lg py-2.5 transition-colors">
                             Cancel Escrow
                         </button>
                     )}
 
                     {showCancelForm && (
-                        <div className="space-y-3 pt-2 border-t border-navy-600">
+                        <div className="space-y-3 pt-2 border-t border-gray-100">
                             <label className="label">Reason for cancellation</label>
                             <textarea
                                 className="input-field resize-none"
@@ -248,11 +246,11 @@ export default function TransactionDetailPage() {
             )}
 
             {tx.status === "RELEASED" && (
-                <div className="bg-success-900/20 border border-success-700/40 rounded-xl px-5 py-4 flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-success-500 flex-shrink-0" />
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 flex items-center gap-3 mb-5">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                     <div>
-                        <p className="text-sm font-semibold text-success-400">Funds Released</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Payment sent to seller via M-Pesa. This deal is complete.</p>
+                        <p className="text-sm font-semibold text-emerald-700">Funds Released</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Payment sent to seller via M-Pesa. This deal is complete.</p>
                     </div>
                 </div>
             )}

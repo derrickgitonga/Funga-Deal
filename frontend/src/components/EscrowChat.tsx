@@ -58,15 +58,15 @@ export default function EscrowChat({ transactionId }: Props) {
         new Date(iso).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" });
 
     return (
-        <div className="card flex flex-col" style={{ height: "420px" }}>
-            <div className="px-5 py-3 border-b border-navy-600 flex-shrink-0">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Chat</p>
-                <p className="text-xs text-slate-600 mt-0.5">Messages are private between buyer and seller</p>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col" style={{ height: "420px" }}>
+            <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Chat</p>
+                <p className="text-xs text-gray-400 mt-0.5">Messages are private between buyer and seller</p>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
                 {messages.length === 0 && (
-                    <p className="text-xs text-slate-600 text-center mt-8">No messages yet. Say something!</p>
+                    <p className="text-xs text-gray-400 text-center mt-8">No messages yet. Say something!</p>
                 )}
                 {messages.map((msg) => {
                     const isMe = msg.sender_id === user?.id || msg.sender_name === user?.fullName;
@@ -74,13 +74,13 @@ export default function EscrowChat({ transactionId }: Props) {
                         <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                             <div
                                 className={`max-w-xs px-3 py-2 rounded-xl text-sm leading-relaxed ${isMe
-                                        ? "bg-success-600 text-white rounded-br-sm"
-                                        : "bg-navy-700 text-slate-200 rounded-bl-sm"
-                                    }`}
+                                    ? "bg-emerald-600 text-white rounded-br-sm"
+                                    : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                                }`}
                             >
                                 {msg.body}
                             </div>
-                            <p className="text-[10px] text-slate-600 mt-1">
+                            <p className="text-[10px] text-gray-400 mt-1">
                                 {isMe ? "You" : msg.sender_name} · {formatTime(msg.created_at)}
                             </p>
                         </div>
@@ -89,7 +89,7 @@ export default function EscrowChat({ transactionId }: Props) {
                 <div ref={bottomRef} />
             </div>
 
-            <div className="px-4 pb-4 pt-2 border-t border-navy-600 flex-shrink-0 flex items-end gap-2">
+            <div className="px-4 pb-4 pt-2 border-t border-gray-100 flex-shrink-0 flex items-end gap-2">
                 <textarea
                     rows={2}
                     className="input-field flex-1 resize-none text-sm"
