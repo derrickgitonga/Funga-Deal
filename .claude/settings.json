@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rustup show:*)",
+      "Read(//c/Users/Administrator/.cargo/bin/**)",
+      "Bash(powershell.exe -Command \"Get-Command cargo\")",
+      "Bash(powershell.exe -Command \"winget --version\")",
+      "Bash(powershell.exe -Command 'Test-Path $env:USERPROFILE\\\\.cargo\\\\bin\\\\cargo.exe')"
+    ]
+  }
+}

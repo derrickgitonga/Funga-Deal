@@ -1,0 +1,8 @@
+# Rust build artifacts
+/target/
+
+# SQLx offline query cache (commit this if you want offline builds in CI)
+# .sqlx/
+
+# Secrets — never commit
+.env
