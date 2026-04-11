@@ -30,6 +30,7 @@ pub struct EscrowRow {
     pub updated_at: OffsetDateTime,
 }
 
+#[allow(dead_code)]
 pub enum AnyEscrow {
     Created(Escrow<Created>),
     Deposited(Escrow<Deposited>),
@@ -139,22 +140,4 @@ impl EscrowRepository {
         rehydrate(row.ok_or(EscrowError::NotFound(id))?)
     }
 
-    pub async fn find_by_buyer(pool: &PgPool, buyer_id: &str) -> Result<Vec<AnyEscrow>, EscrowError> {
-        let rows: Vec<EscrowRow> = sqlx::query_as(
-            r#"
-            SELECT id, buyer_id, seller_id, title, amount, currency, status,
-                   mpesa_checkout_id, idempotency_key,
-                   shipping_timeout_days, inspection_timeout_days,
-                   created_at, updated_at
-            FROM   escrows
-            WHERE  buyer_id = $1
-            ORDER BY created_at DESC
-            "#,
-        )
-        .bind(buyer_id)
-        .fetch_all(pool)
-        .await?;
-
-        rows.into_iter().map(rehydrate).collect()
-    }
 }

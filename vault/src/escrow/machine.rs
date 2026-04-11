@@ -37,13 +37,6 @@ impl<State: EscrowState> Escrow<State> {
     pub(crate) fn from_data(data: EscrowData) -> Self {
         Self { data, _state: PhantomData }
     }
-
-    pub fn db_status(&self) -> &'static str
-    where
-        State: DbStatus,
-    {
-        State::status_str()
-    }
 }
 
 pub trait DbStatus: EscrowState {
@@ -110,6 +103,7 @@ impl Escrow<Deposited> {
         Ok(Escrow::from_data(self.data))
     }
 
+    #[allow(dead_code)]
     pub fn open_dispute(mut self) -> Result<Escrow<InDispute>, EscrowError> {
         self.data.updated_at = OffsetDateTime::now_utc();
         Ok(Escrow::from_data(self.data))
