@@ -28,6 +28,10 @@ pub struct Config {
 
     pub vault_public_url: String,
     pub frontend_url: String,
+
+    pub clerk_jwt_key: Option<Secret<String>>,
+    pub clerk_jwt_issuer: Option<String>,
+    pub redis_url: Option<String>,
 }
 
 impl Config {
@@ -66,6 +70,10 @@ impl Config {
             vault_public_url: env::var("VAULT_PUBLIC_URL")?,
             frontend_url: env::var("FRONTEND_URL")
                 .unwrap_or_else(|_| "http://localhost:3000".into()),
+
+            clerk_jwt_key:    env::var("CLERK_JWT_VERIFICATION_KEY").ok().map(Secret::new),
+            clerk_jwt_issuer: env::var("CLERK_JWT_ISSUER").ok(),
+            redis_url:        env::var("REDIS_URL").ok(),
         })
     }
 

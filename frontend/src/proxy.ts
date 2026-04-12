@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isModeratorRoute = createRouteMatcher(["/moderator(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
     if (isAdminRoute(req)) {
@@ -15,8 +16,22 @@ export default clerkMiddleware(async (auth, req) => {
         if (!userId) {
             return NextResponse.redirect(new URL("/sign-in", req.url));
         }
-        const isAdmin = (sessionClaims?.metadata as Record<string, unknown> | undefined)?.isAdmin === true;
-        if (!isAdmin) {
+        const meta = sessionClaims?.metadata as Record<string, unknown> | undefined;
+        if (meta?.isAdmin !== true) {
+            return NextResponse.redirect(new URL("/dashboard", req.url));
+        }
+        return;
+    }
+
+    if (isModeratorRoute(req)) {
+        const { userId, sessionClaims } = await auth();
+        if (!userId) {
+            return NextResponse.redirect(new URL("/sign-in", req.url));
+        }
+        const meta = sessionClaims?.metadata as Record<string, unknown> | undefined;
+        const role = meta?.role as string | undefined;
+        const allowed = meta?.isAdmin === true || role === "admin" || role === "moderator";
+        if (!allowed) {
             return NextResponse.redirect(new URL("/dashboard", req.url));
         }
         return;

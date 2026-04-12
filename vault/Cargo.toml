@@ -44,8 +44,10 @@ base64   = "0.22"
 hmac     = "0.12"
 sha2     = "0.10"
 hex      = "0.4"
-ipnet    = "2"
-chrono   = { version = "0.4", features = ["serde"] }
+ipnet          = "2"
+chrono         = { version = "0.4", features = ["serde"] }
+jsonwebtoken   = "9"
+redis          = { version = "0.26", features = ["tokio-comp"] }
 
 [dev-dependencies]
 tokio              = { version = "1", features = ["full", "test-util"] }

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo check:*)",
+      "Bash(npx tsc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(wmic logicaldisk:*)",
+      "Bash(cargo clean:*)"
+    ]
+  }
+}

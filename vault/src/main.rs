@@ -6,6 +6,7 @@ mod domain;
 mod error;
 mod escrow;
 mod infrastructure;
+mod mod_service;
 mod mpesa;
 mod nowpayments;
 mod payment;
@@ -25,6 +26,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use jsonwebtoken::DecodingKey;
+use secrecy::ExposeSecret;
 use dotenvy::dotenv;
 use ipnet::IpNet;
 use rust_decimal::Decimal;
@@ -32,7 +35,7 @@ use secrecy::Secret;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tower_http::cors::CorsLayer;
-use tracing::info;
+use tracing::{info, warn};
 use uuid::Uuid;
 
 use config::Config;
@@ -61,6 +64,8 @@ pub struct AppState {
     pub mpesa_allowed_ips: Vec<IpNet>,
     pub intasend_webhook_secret: Option<Secret<String>>,
     pub webhook_rate_limiter: Arc<WebhookRateLimiter>,
+    pub clerk_decoding_key: Option<Arc<DecodingKey>>,
+    pub redis: Option<Arc<redis::Client>>,
 }
 
 async fn create_escrow(
@@ -240,6 +245,27 @@ async fn main() -> anyhow::Result<()> {
         })
         .collect();
 
+    let clerk_decoding_key = cfg
+        .clerk_jwt_key
+        .as_ref()
+        .and_then(|k| match DecodingKey::from_rsa_pem(k.expose_secret().as_bytes()) {
+            Ok(dk) => Some(Arc::new(dk)),
+            Err(e) => {
+                warn!("CLERK_JWT_VERIFICATION_KEY invalid, /mod/* disabled: {e}");
+                None
+            }
+        });
+
+    let redis = cfg.redis_url.as_deref().and_then(|url| {
+        match redis::Client::open(url) {
+            Ok(c) => Some(Arc::new(c)),
+            Err(e) => {
+                warn!("Redis connection failed, session invalidation disabled: {e}");
+                None
+            }
+        }
+    });
+
     let mpesa = Arc::new(MpesaClient::new(cfg.clone()));
     let nowpayments = Arc::new(NowPaymentsClient::new(
         cfg.nowpayments_api_key.clone(),
@@ -279,6 +305,8 @@ async fn main() -> anyhow::Result<()> {
         mpesa_allowed_ips,
         intasend_webhook_secret: cfg.intasend_webhook_secret,
         webhook_rate_limiter: Arc::new(WebhookRateLimiter::new(30, 60)),
+        clerk_decoding_key,
+        redis,
     });
 
     let mpesa_webhooks = Router::new()
@@ -300,9 +328,21 @@ async fn main() -> anyhow::Result<()> {
             webhook::mw_rate_limit,
         ));
 
+    let mod_routes = Router::new()
+        .route("/mod/transactions", get(mod_service::list_transactions))
+        .route("/mod/user/:id/deactivate", post(mod_service::deactivate_user))
+        .route("/mod/user/:id/revoke-seller", post(mod_service::revoke_seller))
+        .route("/mod/transaction/:id/intervene", post(mod_service::intervene_dispute))
+        .route("/mod/transaction/:id/message", post(mod_service::inject_message))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            mod_service::mw_require_moderator,
+        ));
+
     let app = Router::new()
         .merge(mpesa_webhooks)
         .merge(provider_webhooks)
+        .merge(mod_routes)
         .route("/escrows", post(create_escrow))
         .route("/escrows/:id/deposit", post(deposit_funds))
         .route("/escrows/:id/release", post(release_funds))
