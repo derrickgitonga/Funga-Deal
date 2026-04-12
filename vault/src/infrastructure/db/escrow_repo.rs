@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
-    domain::escrow::repository::{EscrowRepository, EscrowUpdate},
+    domain::escrow::repository::{EscrowRepository, EscrowStatusUpdate},
     error::EscrowError,
     escrow::{
         db::{rehydrate, AnyEscrow, EscrowRow},
@@ -25,7 +25,7 @@ impl PostgresEscrowRepository {
 
 #[async_trait]
 impl EscrowRepository for PostgresEscrowRepository {
-    async fn insert(&self, escrow: &Escrow<Created>) -> Result<u64, EscrowError> {
+    async fn insert_created(&self, escrow: &Escrow<Created>) -> Result<u64, EscrowError> {
         let d = &escrow.data;
 
         let result = sqlx::query(
@@ -74,7 +74,7 @@ impl EscrowRepository for PostgresEscrowRepository {
         rehydrate(row.ok_or(EscrowError::NotFound(id))?)
     }
 
-    async fn update(&self, upd: EscrowUpdate) -> Result<(), EscrowError> {
+    async fn update_status(&self, upd: EscrowStatusUpdate) -> Result<(), EscrowError> {
         sqlx::query(
             r#"
             UPDATE escrows

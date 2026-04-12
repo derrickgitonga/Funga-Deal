@@ -16,10 +16,10 @@ pub struct CreateEscrowCommand {
     #[validate(length(min = 1, message = "seller_id is required"))]
     pub seller_id: String,
 
-    #[validate(length(min = 1, max = 255, message = "title must be 1–255 characters"))]
+    #[validate(length(min = 1, max = 255, message = "title must be 1-255 characters"))]
     pub title: String,
 
-    pub amount_minor: i64,
+    pub amount: f64,
 
     #[validate(length(min = 3, max = 3, message = "currency must be a 3-letter ISO 4217 code"))]
     pub currency: String,
@@ -42,11 +42,11 @@ impl CreateEscrowUseCase {
             return Err(EscrowError::BuyerSellerConflict);
         }
 
-        if cmd.amount_minor <= 0 {
+        if cmd.amount <= 0.0 || !cmd.amount.is_finite() {
             return Err(EscrowError::InvalidAmount);
         }
 
-        let amount = Decimal::new(cmd.amount_minor, 0);
+        let amount = Decimal::try_from(cmd.amount).map_err(|_| EscrowError::InvalidAmount)?;
 
         let escrow = Escrow::<Created>::new(
             &cmd.buyer_id,
@@ -58,7 +58,7 @@ impl CreateEscrowUseCase {
         );
 
         let escrow_id = escrow.data.id;
-        let rows_inserted = repo.insert(&escrow).await?;
+        let rows_inserted = repo.insert_created(&escrow).await?;
 
         if rows_inserted == 0 {
             return Err(EscrowError::IdempotencyConflict);

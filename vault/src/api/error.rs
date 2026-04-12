@@ -32,22 +32,22 @@ impl From<EscrowError> for AppError {
     fn from(e: EscrowError) -> Self {
         match e {
             EscrowError::NotFound(id) => {
-                AppError::NotFound(format!("Escrow {} not found", id))
+                AppError::NotFound(format!("escrow {} not found", id))
             }
             EscrowError::AmountMismatch { expected, received } => AppError::Unprocessable(
-                format!("Amount mismatch: expected {expected}, received {received}"),
+                format!("amount mismatch: expected {expected}, received {received}"),
             ),
             EscrowError::BuyerSellerConflict => {
-                AppError::Validation("Buyer and seller must be different users".into())
+                AppError::Validation("buyer and seller must be different users".into())
             }
             EscrowError::InvalidAmount => {
-                AppError::Validation("Amount must be greater than zero".into())
+                AppError::Validation("amount must be greater than zero".into())
             }
             EscrowError::IdempotencyConflict => {
-                AppError::Conflict("An escrow with this idempotency key already exists".into())
+                AppError::Conflict("an escrow with this idempotency key already exists".into())
             }
             EscrowError::UnknownStatus(s) => {
-                AppError::Internal(anyhow::anyhow!("Unknown escrow status in DB: {s}"))
+                AppError::Internal(anyhow::anyhow!("unknown escrow status in db: {s}"))
             }
             EscrowError::Database(e) => AppError::Internal(anyhow::Error::new(e)),
         }
@@ -56,22 +56,32 @@ impl From<EscrowError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, message) = match &self {
-            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.clone()),
-            AppError::Conflict(msg) => (StatusCode::CONFLICT, msg.clone()),
-            AppError::Validation(msg) | AppError::Unprocessable(msg) => {
-                (StatusCode::UNPROCESSABLE_ENTITY, msg.clone())
-            }
-            AppError::BadGateway(msg) => (StatusCode::BAD_GATEWAY, msg.clone()),
+        let (status, body) = match &self {
+            AppError::NotFound(msg) => (
+                StatusCode::NOT_FOUND,
+                serde_json::json!({ "error": msg }),
+            ),
+            AppError::Conflict(msg) => (
+                StatusCode::CONFLICT,
+                serde_json::json!({ "error": msg }),
+            ),
+            AppError::Validation(msg) | AppError::Unprocessable(msg) => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                serde_json::json!({ "error": msg }),
+            ),
+            AppError::BadGateway(msg) => (
+                StatusCode::BAD_GATEWAY,
+                serde_json::json!({ "error": msg }),
+            ),
             AppError::Internal(e) => {
-                tracing::error!(error = %e, "Unhandled internal error");
+                tracing::error!(error = %e, "unhandled internal error");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    "An internal error occurred".to_string(),
+                    serde_json::json!({ "error": "INTERNAL_ERROR" }),
                 )
             }
         };
 
-        (status, Json(serde_json::json!({ "error": message }))).into_response()
+        (status, Json(body)).into_response()
     }
 }
