@@ -73,10 +73,14 @@ pub async fn get_link(
     .bind(&link_id)
     .fetch_one(&state.db)
     .await
-    .map_err(|_| not_found())?;
+    .map_err(|e| {
+        tracing::error!("get_link DB error for id={link_id}: {e}");
+        not_found()
+    })?;
 
     let status: String = row.try_get("status").unwrap_or_default();
-    if status != "active" {
+    tracing::info!("get_link id={link_id} status={status:?}");
+    if status.to_lowercase() != "active" {
         return Err((
             StatusCode::GONE,
             Json(serde_json::json!({ "detail": "This payment link is no longer active" })),
@@ -118,7 +122,7 @@ pub async fn pay_crypto(
     .map_err(|_| bad("Payment link not found"))?;
 
     let link_status: String = row.try_get("status").unwrap_or_default();
-    if link_status != "active" {
+    if link_status.to_lowercase() != "active" {
         return Err(bad("This payment link is no longer active"));
     }
 
@@ -192,7 +196,7 @@ pub async fn pay_mpesa(
     .map_err(|_| bad("Payment link not found"))?;
 
     let link_status: String = row.try_get("status").unwrap_or_default();
-    if link_status != "active" {
+    if link_status.to_lowercase() != "active" {
         return Err(bad("This payment link is no longer active"));
     }
 
