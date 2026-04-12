@@ -10,7 +10,6 @@ import {
     User2,
     Wallet,
     Link2,
-    Users,
 } from "lucide-react";
 
 const NAV = [
@@ -19,7 +18,6 @@ const NAV = [
     { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
     { href: "/dashboard/payment-links", label: "Payment Links", icon: Link2 },
     { href: "/dashboard/become-seller", label: "Become a Seller", icon: ShieldCheck },
-    { href: "/dashboard/admin", label: "Admin", icon: Users },
 ];
 
 export default function Sidebar() {
