@@ -49,7 +49,7 @@ impl MpesaClient {
         }
     }
 
-    async fn access_token(&self) -> anyhow::Result<String> {
+    pub(crate) async fn access_token(&self) -> anyhow::Result<String> {
         let creds = STANDARD.encode(format!(
             "{}:{}",
             self.config.mpesa_consumer_key.expose_secret(),

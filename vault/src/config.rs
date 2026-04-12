@@ -10,6 +10,12 @@ pub struct Config {
     pub mpesa_passkey: Secret<String>,
     pub mpesa_env: String,
     pub mpesa_allowed_ips: String,
+    pub mpesa_b2c_initiator: String,
+    pub mpesa_b2c_security_credential: Secret<String>,
+    pub mpesa_b2c_queue_url: String,
+    pub mpesa_b2c_result_url: String,
+
+    pub service_fee_bps: u32,
 
     pub nowpayments_api_key: Secret<String>,
     pub nowpayments_ipn_secret: Secret<String>,
@@ -34,6 +40,15 @@ impl Config {
             mpesa_env:             env::var("MPESA_ENV").unwrap_or_else(|_| "sandbox".into()),
             mpesa_allowed_ips:     env::var("MPESA_ALLOWED_IPS")
                 .unwrap_or_else(|_| "196.201.214.200,196.201.214.206".into()),
+            mpesa_b2c_initiator:              env::var("MPESA_B2C_INITIATOR")?,
+            mpesa_b2c_security_credential:    Secret::new(env::var("MPESA_B2C_SECURITY_CREDENTIAL")?),
+            mpesa_b2c_queue_url:              env::var("MPESA_B2C_QUEUE_URL")?,
+            mpesa_b2c_result_url:             env::var("MPESA_B2C_RESULT_URL")?,
+
+            service_fee_bps: env::var("SERVICE_FEE_BPS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(150),
 
             nowpayments_api_key:        Secret::new(env::var("NOWPAYMENTS_API_KEY")?),
             nowpayments_ipn_secret:     Secret::new(env::var("NOWPAYMENTS_IPN_SECRET")?),

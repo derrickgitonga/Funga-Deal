@@ -10,8 +10,10 @@ mod mpesa;
 mod nowpayments;
 mod payment;
 mod payment_link_payment;
+mod payout_service;
 mod universal_pay;
 mod webhook;
+mod worker;
 
 use std::{net::SocketAddr, sync::Arc};
 
@@ -41,6 +43,7 @@ use escrow::{
 };
 use mpesa::MpesaClient;
 use nowpayments::NowPaymentsClient;
+use payout_service::B2CClient;
 use webhook::WebhookRateLimiter;
 
 #[derive(Clone)]
@@ -242,9 +245,20 @@ async fn main() -> anyhow::Result<()> {
         cfg.nowpayments_api_key.clone(),
         cfg.nowpayments_ipn_secret.clone(),
     ));
+    let b2c = B2CClient::new(mpesa.clone(), cfg.clone());
 
     let pool = PgPool::connect(&database_url).await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
+
+    let worker_state = Arc::new(worker::WorkerState {
+        db: pool.clone(),
+        b2c,
+        service_fee_bps: cfg.service_fee_bps,
+        http: reqwest::Client::new(),
+        django_backend_url: cfg.django_backend_url.clone(),
+        internal_service_secret: cfg.internal_service_secret.clone(),
+    });
+    tokio::spawn(worker::run(worker_state));
 
     let state = Arc::new(AppState {
         db: pool,
