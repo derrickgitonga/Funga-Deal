@@ -46,10 +46,15 @@ impl From<EscrowError> for AppError {
             EscrowError::IdempotencyConflict => {
                 AppError::Conflict("an escrow with this idempotency key already exists".into())
             }
+            EscrowError::InvalidTransition { from, to } => AppError::Conflict(
+                format!("invalid state transition from '{from}' to '{to}'"),
+            ),
             EscrowError::UnknownStatus(s) => {
                 AppError::Internal(anyhow::anyhow!("unknown escrow status in db: {s}"))
             }
-            EscrowError::Database(e) => AppError::Internal(anyhow::Error::new(e)),
+            EscrowError::Repository(msg) => {
+                AppError::Internal(anyhow::anyhow!("repository error: {msg}"))
+            }
         }
     }
 }

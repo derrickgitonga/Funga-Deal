@@ -1,5 +1,6 @@
 use hmac::{Hmac, Mac};
 use reqwest::Client;
+use secrecy::{ExposeSecret, Secret};
 use serde::{Deserialize, Serialize};
 use sha2::Sha512;
 
@@ -9,8 +10,8 @@ const API_BASE: &str = "https://api.nowpayments.io/v1";
 
 pub struct NowPaymentsClient {
     http: Client,
-    api_key: String,
-    ipn_secret: String,
+    api_key: Secret<String>,
+    ipn_secret: Secret<String>,
 }
 
 #[derive(Serialize)]
@@ -31,7 +32,7 @@ pub struct Invoice {
 }
 
 impl NowPaymentsClient {
-    pub fn new(api_key: String, ipn_secret: String) -> Self {
+    pub fn new(api_key: Secret<String>, ipn_secret: Secret<String>) -> Self {
         Self {
             http: Client::new(),
             api_key,
@@ -62,7 +63,7 @@ impl NowPaymentsClient {
         let invoice: Invoice = self
             .http
             .post(format!("{API_BASE}/invoice"))
-            .header("x-api-key", &self.api_key)
+            .header("x-api-key", self.api_key.expose_secret())
             .json(&body)
             .send()
             .await?
@@ -74,7 +75,7 @@ impl NowPaymentsClient {
     }
 
     pub fn verify_ipn_signature(&self, sorted_json: &str, signature: &str) -> bool {
-        let mut mac = HmacSha512::new_from_slice(self.ipn_secret.as_bytes())
+        let mut mac = HmacSha512::new_from_slice(self.ipn_secret.expose_secret().as_bytes())
             .expect("HMAC accepts any key length");
         mac.update(sorted_json.as_bytes());
         let result = mac.finalize().into_bytes();

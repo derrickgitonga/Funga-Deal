@@ -51,7 +51,8 @@ impl EscrowRepository for PostgresEscrowRepository {
         .bind(d.created_at)
         .bind(d.updated_at)
         .execute(&self.pool)
-        .await?;
+        .await
+        .map_err(|e| EscrowError::Repository(e.to_string()))?;
 
         Ok(result.rows_affected())
     }
@@ -69,7 +70,8 @@ impl EscrowRepository for PostgresEscrowRepository {
         )
         .bind(id)
         .fetch_optional(&self.pool)
-        .await?;
+        .await
+        .map_err(|e| EscrowError::Repository(e.to_string()))?;
 
         rehydrate(row.ok_or(EscrowError::NotFound(id))?)
     }
@@ -89,7 +91,8 @@ impl EscrowRepository for PostgresEscrowRepository {
         .bind(upd.updated_at)
         .bind(upd.id)
         .execute(&self.pool)
-        .await?;
+        .await
+        .map_err(|e| EscrowError::Repository(e.to_string()))?;
 
         Ok(())
     }

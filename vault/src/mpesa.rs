@@ -1,5 +1,6 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::Client;
+use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -51,8 +52,8 @@ impl MpesaClient {
     async fn access_token(&self) -> anyhow::Result<String> {
         let creds = STANDARD.encode(format!(
             "{}:{}",
-            self.config.mpesa_consumer_key,
-            self.config.mpesa_consumer_secret
+            self.config.mpesa_consumer_key.expose_secret(),
+            self.config.mpesa_consumer_secret.expose_secret(),
         ));
 
         let res: TokenResponse = self
@@ -93,7 +94,7 @@ impl MpesaClient {
         let raw_password = format!(
             "{}{}{}",
             self.config.mpesa_shortcode,
-            self.config.mpesa_passkey,
+            self.config.mpesa_passkey.expose_secret(),
             timestamp
         );
         let password = STANDARD.encode(raw_password);

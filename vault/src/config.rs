@@ -1,15 +1,17 @@
 use std::env;
 
+use secrecy::Secret;
+
 #[derive(Clone)]
 pub struct Config {
-    pub mpesa_consumer_key: String,
-    pub mpesa_consumer_secret: String,
+    pub mpesa_consumer_key: Secret<String>,
+    pub mpesa_consumer_secret: Secret<String>,
     pub mpesa_shortcode: String,
-    pub mpesa_passkey: String,
+    pub mpesa_passkey: Secret<String>,
     pub mpesa_env: String,
 
-    pub nowpayments_api_key: String,
-    pub nowpayments_ipn_secret: String,
+    pub nowpayments_api_key: Secret<String>,
+    pub nowpayments_ipn_secret: Secret<String>,
     pub nowpayments_price_currency: String,
 
     pub vault_public_url: String,
@@ -19,14 +21,14 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         Ok(Self {
-            mpesa_consumer_key:    env::var("MPESA_CONSUMER_KEY")?,
-            mpesa_consumer_secret: env::var("MPESA_CONSUMER_SECRET")?,
+            mpesa_consumer_key:    Secret::new(env::var("MPESA_CONSUMER_KEY")?),
+            mpesa_consumer_secret: Secret::new(env::var("MPESA_CONSUMER_SECRET")?),
             mpesa_shortcode:       env::var("MPESA_SHORTCODE")?,
-            mpesa_passkey:         env::var("MPESA_PASSKEY")?,
+            mpesa_passkey:         Secret::new(env::var("MPESA_PASSKEY")?),
             mpesa_env:             env::var("MPESA_ENV").unwrap_or_else(|_| "sandbox".into()),
 
-            nowpayments_api_key:        env::var("NOWPAYMENTS_API_KEY")?,
-            nowpayments_ipn_secret:     env::var("NOWPAYMENTS_IPN_SECRET")?,
+            nowpayments_api_key:        Secret::new(env::var("NOWPAYMENTS_API_KEY")?),
+            nowpayments_ipn_secret:     Secret::new(env::var("NOWPAYMENTS_IPN_SECRET")?),
             nowpayments_price_currency: env::var("NOWPAYMENTS_PRICE_CURRENCY")
                 .unwrap_or_else(|_| "usd".into()),
 
