@@ -304,7 +304,7 @@ pub async fn mpesa_webhook(
             notify_django(
                 &state.http_client,
                 &state.django_backend_url,
-                state.internal_service_secret.expose_secret(),
+                state.internal_service_secret.as_ref().map(|s| s.expose_secret().as_str()).unwrap_or(""),
                 "payment.completed",
                 &order_id,
             )
@@ -386,7 +386,7 @@ pub async fn nowpayments_webhook(
             notify_django(
                 &state.http_client,
                 &state.django_backend_url,
-                state.internal_service_secret.expose_secret(),
+                state.internal_service_secret.as_ref().map(|s| s.expose_secret().as_str()).unwrap_or(""),
                 "payment.completed",
                 &order_id,
             )
@@ -497,7 +497,7 @@ pub async fn intasend_webhook(
             notify_django(
                 &state.http_client,
                 &state.django_backend_url,
-                state.internal_service_secret.expose_secret(),
+                state.internal_service_secret.as_ref().map(|s| s.expose_secret().as_str()).unwrap_or(""),
                 "payment.completed",
                 &order_id,
             )

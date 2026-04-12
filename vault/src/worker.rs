@@ -19,7 +19,7 @@ pub struct WorkerState {
     pub service_fee_bps: u32,
     pub http: reqwest::Client,
     pub django_backend_url: String,
-    pub internal_service_secret: Secret<String>,
+    pub internal_service_secret: Option<Secret<String>>,
 }
 
 pub async fn run(state: Arc<WorkerState>) {
@@ -437,7 +437,14 @@ async fn notify_django(state: &WorkerState, event: &str, escrow_id: &str) {
         ))
         .header(
             "Authorization",
-            format!("Bearer {}", state.internal_service_secret.expose_secret()),
+            format!(
+                "Bearer {}",
+                state
+                    .internal_service_secret
+                    .as_ref()
+                    .map(|s| s.expose_secret().as_str())
+                    .unwrap_or("")
+            ),
         )
         .json(&serde_json::json!({ "event": event, "escrow_id": escrow_id }))
         .send()

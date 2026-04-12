@@ -11,7 +11,7 @@ pub struct Config {
     pub mpesa_env: String,
     pub mpesa_allowed_ips: String,
     pub mpesa_b2c_initiator: String,
-    pub mpesa_b2c_security_credential: Secret<String>,
+    pub mpesa_b2c_security_credential: Option<Secret<String>>,
     pub mpesa_b2c_queue_url: String,
     pub mpesa_b2c_result_url: String,
 
@@ -23,7 +23,7 @@ pub struct Config {
 
     pub intasend_webhook_secret: Option<Secret<String>>,
 
-    pub internal_service_secret: Secret<String>,
+    pub internal_service_secret: Option<Secret<String>>,
     pub django_backend_url: String,
 
     pub vault_public_url: String,
@@ -40,10 +40,10 @@ impl Config {
             mpesa_env:             env::var("MPESA_ENV").unwrap_or_else(|_| "sandbox".into()),
             mpesa_allowed_ips:     env::var("MPESA_ALLOWED_IPS")
                 .unwrap_or_else(|_| "196.201.214.200,196.201.214.206".into()),
-            mpesa_b2c_initiator:              env::var("MPESA_B2C_INITIATOR")?,
-            mpesa_b2c_security_credential:    Secret::new(env::var("MPESA_B2C_SECURITY_CREDENTIAL")?),
-            mpesa_b2c_queue_url:              env::var("MPESA_B2C_QUEUE_URL")?,
-            mpesa_b2c_result_url:             env::var("MPESA_B2C_RESULT_URL")?,
+            mpesa_b2c_initiator:           env::var("MPESA_B2C_INITIATOR").unwrap_or_default(),
+            mpesa_b2c_security_credential: env::var("MPESA_B2C_SECURITY_CREDENTIAL").ok().map(Secret::new),
+            mpesa_b2c_queue_url:           env::var("MPESA_B2C_QUEUE_URL").unwrap_or_default(),
+            mpesa_b2c_result_url:          env::var("MPESA_B2C_RESULT_URL").unwrap_or_default(),
 
             service_fee_bps: env::var("SERVICE_FEE_BPS")
                 .ok()
@@ -59,7 +59,7 @@ impl Config {
                 .ok()
                 .map(Secret::new),
 
-            internal_service_secret: Secret::new(env::var("INTERNAL_SERVICE_SECRET")?),
+            internal_service_secret: env::var("INTERNAL_SERVICE_SECRET").ok().map(Secret::new),
             django_backend_url:      env::var("DJANGO_BACKEND_URL")
                 .unwrap_or_else(|_| "http://localhost:8000".into()),
 

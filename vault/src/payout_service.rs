@@ -85,7 +85,12 @@ impl B2CClient {
 
         let body = B2CRequest {
             initiator_name: &self.config.mpesa_b2c_initiator,
-            security_credential: self.config.mpesa_b2c_security_credential.expose_secret(),
+            security_credential: self
+                .config
+                .mpesa_b2c_security_credential
+                .as_ref()
+                .map(|s| s.expose_secret().as_str())
+                .unwrap_or(""),
             command_id: "BusinessPayment",
             amount: amount_u64,
             party_a: &self.config.mpesa_shortcode,

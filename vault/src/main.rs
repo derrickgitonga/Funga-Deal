@@ -56,7 +56,7 @@ pub struct AppState {
     pub vault_public_url: String,
     pub frontend_url: String,
     pub http_client: reqwest::Client,
-    pub internal_service_secret: Secret<String>,
+    pub internal_service_secret: Option<Secret<String>>,
     pub django_backend_url: String,
     pub mpesa_allowed_ips: Vec<IpNet>,
     pub intasend_webhook_secret: Option<Secret<String>>,
@@ -250,15 +250,20 @@ async fn main() -> anyhow::Result<()> {
     let pool = PgPool::connect(&database_url).await?;
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let worker_state = Arc::new(worker::WorkerState {
-        db: pool.clone(),
-        b2c,
-        service_fee_bps: cfg.service_fee_bps,
-        http: reqwest::Client::new(),
-        django_backend_url: cfg.django_backend_url.clone(),
-        internal_service_secret: cfg.internal_service_secret.clone(),
-    });
-    tokio::spawn(worker::run(worker_state));
+    if cfg.mpesa_b2c_security_credential.is_some() && cfg.internal_service_secret.is_some() {
+        let worker_state = Arc::new(worker::WorkerState {
+            db: pool.clone(),
+            b2c,
+            service_fee_bps: cfg.service_fee_bps,
+            http: reqwest::Client::new(),
+            django_backend_url: cfg.django_backend_url.clone(),
+            internal_service_secret: cfg.internal_service_secret.clone(),
+        });
+        tokio::spawn(worker::run(worker_state));
+        info!("Payout worker started");
+    } else {
+        info!("Payout worker DISABLED — set MPESA_B2C_SECURITY_CREDENTIAL and INTERNAL_SERVICE_SECRET to enable");
+    }
 
     let state = Arc::new(AppState {
         db: pool,
