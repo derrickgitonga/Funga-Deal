@@ -10,18 +10,23 @@ mod mpesa;
 mod nowpayments;
 mod payment;
 mod payment_link_payment;
+mod universal_pay;
+mod webhook;
 
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    middleware,
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
 use dotenvy::dotenv;
+use ipnet::IpNet;
 use rust_decimal::Decimal;
+use secrecy::Secret;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tower_http::cors::CorsLayer;
@@ -36,6 +41,7 @@ use escrow::{
 };
 use mpesa::MpesaClient;
 use nowpayments::NowPaymentsClient;
+use webhook::WebhookRateLimiter;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -43,8 +49,15 @@ pub struct AppState {
     pub mpesa: Arc<MpesaClient>,
     pub nowpayments: Arc<NowPaymentsClient>,
     pub nowpayments_price_currency: String,
+    pub nowpayments_ipn_secret: Secret<String>,
     pub vault_public_url: String,
     pub frontend_url: String,
+    pub http_client: reqwest::Client,
+    pub internal_service_secret: Secret<String>,
+    pub django_backend_url: String,
+    pub mpesa_allowed_ips: Vec<IpNet>,
+    pub intasend_webhook_secret: Option<Secret<String>>,
+    pub webhook_rate_limiter: Arc<WebhookRateLimiter>,
 }
 
 async fn create_escrow(
@@ -212,6 +225,18 @@ async fn main() -> anyhow::Result<()> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let cfg = Config::from_env()?;
 
+    let mpesa_allowed_ips: Vec<IpNet> = cfg
+        .mpesa_allowed_ips
+        .split(',')
+        .filter_map(|s| {
+            let trimmed = s.trim();
+            trimmed
+                .parse::<IpNet>()
+                .or_else(|_| trimmed.parse::<std::net::IpAddr>().map(IpNet::from))
+                .ok()
+        })
+        .collect();
+
     let mpesa = Arc::new(MpesaClient::new(cfg.clone()));
     let nowpayments = Arc::new(NowPaymentsClient::new(
         cfg.nowpayments_api_key.clone(),
@@ -226,11 +251,39 @@ async fn main() -> anyhow::Result<()> {
         mpesa,
         nowpayments,
         nowpayments_price_currency: cfg.nowpayments_price_currency,
+        nowpayments_ipn_secret: cfg.nowpayments_ipn_secret,
         vault_public_url: cfg.vault_public_url.clone(),
         frontend_url: cfg.frontend_url,
+        http_client: reqwest::Client::new(),
+        internal_service_secret: cfg.internal_service_secret,
+        django_backend_url: cfg.django_backend_url,
+        mpesa_allowed_ips,
+        intasend_webhook_secret: cfg.intasend_webhook_secret,
+        webhook_rate_limiter: Arc::new(WebhookRateLimiter::new(30, 60)),
     });
 
+    let mpesa_webhooks = Router::new()
+        .route("/webhooks/mpesa", post(webhook::mpesa_webhook))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            webhook::mw_require_mpesa_ip,
+        ))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            webhook::mw_rate_limit,
+        ));
+
+    let provider_webhooks = Router::new()
+        .route("/webhooks/nowpayments", post(webhook::nowpayments_webhook))
+        .route("/webhooks/intasend", post(webhook::intasend_webhook))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            webhook::mw_rate_limit,
+        ));
+
     let app = Router::new()
+        .merge(mpesa_webhooks)
+        .merge(provider_webhooks)
         .route("/escrows", post(create_escrow))
         .route("/escrows/:id/deposit", post(deposit_funds))
         .route("/escrows/:id/release", post(release_funds))
@@ -245,12 +298,18 @@ async fn main() -> anyhow::Result<()> {
         .route("/payment-links/:id/pay/mpesa", post(payment_link_payment::pay_mpesa))
         .route("/payment-links/callback/crypto", post(payment_link_payment::crypto_callback))
         .route("/payment-links/callback/mpesa", post(payment_link_payment::mpesa_callback))
+        .route("/pay/:id", get(universal_pay::get_payment))
+        .route("/pay/:id/initiate", post(universal_pay::initiate_payment))
         .layer(CorsLayer::permissive())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8001").await?;
     info!("Funga Vault listening on {}", listener.local_addr()?);
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
 
     Ok(())
 }

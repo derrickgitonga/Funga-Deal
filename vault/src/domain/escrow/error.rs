@@ -31,4 +31,7 @@ pub enum EscrowError {
 
     #[error("repository error: {0}")]
     Repository(String),
+
+    #[error("database error: {0}")]
+    Database(#[from] sqlx::Error),
 }

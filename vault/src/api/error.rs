@@ -55,6 +55,9 @@ impl From<EscrowError> for AppError {
             EscrowError::Repository(msg) => {
                 AppError::Internal(anyhow::anyhow!("repository error: {msg}"))
             }
+            EscrowError::Database(e) => {
+                AppError::Internal(anyhow::anyhow!("database error: {e}"))
+            }
         }
     }
 }
