@@ -1,7 +1,11 @@
+mod api;
+mod application;
 mod config;
 mod crypto_payment;
+mod domain;
 mod error;
 mod escrow;
+mod infrastructure;
 mod mpesa;
 mod nowpayments;
 mod payment;

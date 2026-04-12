@@ -8,8 +8,9 @@ use uuid::Uuid;
 
 use crate::error::EscrowError;
 use super::states::{
-    Created, Deposited, EscrowState, InDispute, Refunded, Released,
-    STATUS_CREATED, STATUS_DEPOSITED, STATUS_IN_DISPUTE, STATUS_REFUNDED, STATUS_RELEASED,
+    Created, Delivered, Deposited, EscrowState, InDispute, Refunded, Released, Shipped,
+    STATUS_CREATED, STATUS_DELIVERED, STATUS_DEPOSITED, STATUS_IN_DISPUTE, STATUS_REFUNDED,
+    STATUS_RELEASED, STATUS_SHIPPED,
 };
 
 #[derive(Debug, Clone)]
@@ -45,6 +46,8 @@ pub trait DbStatus: EscrowState {
 
 impl DbStatus for Created   { fn status_str() -> &'static str { STATUS_CREATED   } }
 impl DbStatus for Deposited { fn status_str() -> &'static str { STATUS_DEPOSITED  } }
+impl DbStatus for Shipped   { fn status_str() -> &'static str { STATUS_SHIPPED    } }
+impl DbStatus for Delivered { fn status_str() -> &'static str { STATUS_DELIVERED  } }
 impl DbStatus for InDispute { fn status_str() -> &'static str { STATUS_IN_DISPUTE } }
 impl DbStatus for Released  { fn status_str() -> &'static str { STATUS_RELEASED   } }
 impl DbStatus for Refunded  { fn status_str() -> &'static str { STATUS_REFUNDED   } }
@@ -93,6 +96,11 @@ impl Escrow<Created> {
 }
 
 impl Escrow<Deposited> {
+    pub fn mark_shipped(mut self) -> Result<Escrow<Shipped>, EscrowError> {
+        self.data.updated_at = OffsetDateTime::now_utc();
+        Ok(Escrow::from_data(self.data))
+    }
+
     pub fn release(mut self) -> Result<Escrow<Released>, EscrowError> {
         self.data.updated_at = OffsetDateTime::now_utc();
         Ok(Escrow::from_data(self.data))
@@ -104,6 +112,18 @@ impl Escrow<Deposited> {
     }
 
     #[allow(dead_code)]
+    pub fn open_dispute(mut self) -> Result<Escrow<InDispute>, EscrowError> {
+        self.data.updated_at = OffsetDateTime::now_utc();
+        Ok(Escrow::from_data(self.data))
+    }
+}
+
+impl Escrow<Shipped> {
+    pub fn confirm_delivery(mut self) -> Result<Escrow<Delivered>, EscrowError> {
+        self.data.updated_at = OffsetDateTime::now_utc();
+        Ok(Escrow::from_data(self.data))
+    }
+
     pub fn open_dispute(mut self) -> Result<Escrow<InDispute>, EscrowError> {
         self.data.updated_at = OffsetDateTime::now_utc();
         Ok(Escrow::from_data(self.data))

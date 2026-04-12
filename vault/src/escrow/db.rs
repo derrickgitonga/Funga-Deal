@@ -8,8 +8,9 @@ use crate::error::EscrowError;
 use super::{
     machine::{DbStatus, Escrow, EscrowData},
     states::{
-        Created, Deposited, EscrowState, InDispute, Refunded, Released,
-        STATUS_CREATED, STATUS_DEPOSITED, STATUS_IN_DISPUTE, STATUS_REFUNDED, STATUS_RELEASED,
+        Created, Delivered, Deposited, EscrowState, InDispute, Refunded, Released, Shipped,
+        STATUS_CREATED, STATUS_DELIVERED, STATUS_DEPOSITED, STATUS_IN_DISPUTE, STATUS_REFUNDED,
+        STATUS_RELEASED, STATUS_SHIPPED,
     },
 };
 
@@ -34,6 +35,8 @@ pub struct EscrowRow {
 pub enum AnyEscrow {
     Created(Escrow<Created>),
     Deposited(Escrow<Deposited>),
+    Shipped(Escrow<Shipped>),
+    Delivered(Escrow<Delivered>),
     InDispute(Escrow<InDispute>),
     Released(Escrow<Released>),
     Refunded(Escrow<Refunded>),
@@ -58,6 +61,8 @@ pub fn rehydrate(row: EscrowRow) -> Result<AnyEscrow, EscrowError> {
     match row.status.as_str() {
         STATUS_CREATED    => Ok(AnyEscrow::Created(Escrow::from_data(data))),
         STATUS_DEPOSITED  => Ok(AnyEscrow::Deposited(Escrow::from_data(data))),
+        STATUS_SHIPPED    => Ok(AnyEscrow::Shipped(Escrow::from_data(data))),
+        STATUS_DELIVERED  => Ok(AnyEscrow::Delivered(Escrow::from_data(data))),
         STATUS_IN_DISPUTE => Ok(AnyEscrow::InDispute(Escrow::from_data(data))),
         STATUS_RELEASED   => Ok(AnyEscrow::Released(Escrow::from_data(data))),
         STATUS_REFUNDED   => Ok(AnyEscrow::Refunded(Escrow::from_data(data))),

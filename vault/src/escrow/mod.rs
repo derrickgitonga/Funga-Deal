@@ -6,4 +6,6 @@ pub mod states;
 
 pub use db::AnyEscrow;
 pub use machine::{DisputeResolution, Escrow, EscrowData, ResolvedEscrow};
-pub use states::{Created, Deposited, EscrowState, InDispute, Refunded, Released};
+pub use states::{
+    Created, Delivered, Deposited, EscrowState, InDispute, Refunded, Released, Shipped,
+};

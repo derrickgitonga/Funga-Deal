@@ -16,4 +16,13 @@ pub enum EscrowError {
         expected: rust_decimal::Decimal,
         received: rust_decimal::Decimal,
     },
+
+    #[error("Buyer and seller must be different users")]
+    BuyerSellerConflict,
+
+    #[error("Amount must be greater than zero")]
+    InvalidAmount,
+
+    #[error("An escrow with this idempotency key already exists")]
+    IdempotencyConflict,
 }
