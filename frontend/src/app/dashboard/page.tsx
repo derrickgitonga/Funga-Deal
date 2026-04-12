@@ -30,6 +30,13 @@ const timeAgo = (iso: string) => {
     return `${Math.floor(h / 24)}d ago`;
 };
 
+const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+};
+
 export default function DashboardPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -53,7 +60,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        Good morning{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
+                        {getGreeting()}{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">Your escrow overview</p>
                 </div>
