@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     MPESA_B2C_QUEUE_URL: str = ""
     MPESA_B2C_RESULT_URL: str = ""
     MPESA_ENV: str = "sandbox"
+    MOD_SECRET: str = ""
 
     UPLOAD_DIR: str = "uploads"
 

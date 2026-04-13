@@ -17,6 +17,43 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+#[derive(Serialize)]
+pub struct ModStats {
+    active: i64,
+    in_dispute: i64,
+    under_review: i64,
+    payout_pending: i64,
+    resolved: i64,
+    total: i64,
+}
+
+pub async fn mod_stats(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let row = sqlx::query(
+        "SELECT
+            COUNT(*)                                                                     AS total,
+            COUNT(*) FILTER (WHERE status NOT IN ('released','refunded','payout_completed')) AS active,
+            COUNT(*) FILTER (WHERE status = 'in_dispute')                               AS in_dispute,
+            COUNT(*) FILTER (WHERE status = 'under_review')                             AS under_review,
+            COUNT(*) FILTER (WHERE status IN ('payout_pending','release_queued','payout_failed')) AS payout_pending,
+            COUNT(*) FILTER (WHERE status IN ('released','refunded','payout_completed')) AS resolved
+         FROM escrows",
+    )
+    .fetch_one(&state.db)
+    .await
+    .map_err(internal)?;
+
+    Ok(Json(ModStats {
+        total:         row.try_get::<i64, _>("total").unwrap_or(0),
+        active:        row.try_get::<i64, _>("active").unwrap_or(0),
+        in_dispute:    row.try_get::<i64, _>("in_dispute").unwrap_or(0),
+        under_review:  row.try_get::<i64, _>("under_review").unwrap_or(0),
+        payout_pending: row.try_get::<i64, _>("payout_pending").unwrap_or(0),
+        resolved:      row.try_get::<i64, _>("resolved").unwrap_or(0),
+    }))
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum UserStatus {

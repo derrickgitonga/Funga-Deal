@@ -53,16 +53,16 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            <div className="border-t border-gray-200 px-4 py-4">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+            <div className="border-t border-gray-200 px-4 py-4" suppressHydrationWarning>
+                <div className="flex items-center gap-3 mb-3" suppressHydrationWarning>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden" suppressHydrationWarning>
                         {user?.imageUrl ? (
                             <img src={user.imageUrl} alt={user.fullName || "User"} className="w-full h-full object-cover" />
                         ) : (
                             <User2 className="w-4 h-4 text-gray-400" />
                         )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0" suppressHydrationWarning>
                         {!isLoaded ? (
                             <div className="h-4 bg-gray-100 rounded w-20 animate-pulse mb-1"></div>
                         ) : (

@@ -329,6 +329,7 @@ async fn main() -> anyhow::Result<()> {
         ));
 
     let mod_routes = Router::new()
+        .route("/mod/stats", get(mod_service::mod_stats))
         .route("/mod/transactions", get(mod_service::list_transactions))
         .route("/mod/user/:id/deactivate", post(mod_service::deactivate_user))
         .route("/mod/user/:id/revoke-seller", post(mod_service::revoke_seller))
